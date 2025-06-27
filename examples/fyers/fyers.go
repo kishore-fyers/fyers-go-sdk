@@ -7,9 +7,9 @@ import (
 
 const (
 	clientId    string = "YK04391"
-	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6Ijk4NmMzYWE3MDlkZDQxMDJhN2M3NDBiZGRjMTg2NWRjIiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJlYjY5NmZiMzE5ZTJjZDdlOGM0NGUxNGViMzY3MjAxYzZiNjY5ODBkNmNmNmI5MzM0MmM0Mzg1YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzUwMjEyMjM5LCJpYXQiOjE3NTAxODIyMzksImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc1MDE4MjIzOSwic3ViIjoiYXV0aF9jb2RlIn0.ZFcuK_ZOcotrGCr7jMq7C2YSUKrg80VcBtAUrlePFaM"
-	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCb1hNWmxXLVlMYWU2MWdFaFpHR1B3enhBd0V4eU5uV1poc3Y3V0p0Y1RsVnJiVVVpRWdaNFM5SWpRN2c0ejN2ckVoR0o2dklWX19xZ3FrbkdyQ25vYXRkOGo4UDktM0kyakRxTjJZR2JLVklpN19FOD0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiIyZDVjZGZiMmZmMzU5NDg2YWFmNGQyOTViZWM0YjIzMTFlYzVmZTU0NDc1Mjc5MGUzZGZiMmFhNSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzUwOTg0MjAwLCJpYXQiOjE3NTA5MTA1NjUsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MDkxMDU2NSwic3ViIjoiYWNjZXNzX3Rva2VuIn0._6qyZsfbd2Ts1qB396OfPMWMXwNWr-P25m5Tys7kocQ"
-	appId       string = "Z0G0WQQT6T-101"
+	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6IjUwZDNkMzYzOGRhZDRhMzBhYjdmYTkyNjA1Y2JiMGQ5IiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzUxMDI1Nzc5LCJpYXQiOjE3NTA5OTU3NzksImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc1MDk5NTc3OSwic3ViIjoiYXV0aF9jb2RlIn0._owMRDDNRQaP2foL6EVf-Wsrmx_XYFTToRTbZLZuTJw"
+	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCb1hoTlczYmw0M0FKU0JFellJRzNNaU9MM2kxT0I3SjYzVkx4ZDBpUk9yRkNncG1BMjJoVDdnOUQzcVJVYXJRQ0FoSUxjNmpQOGtJazhnT0ptS3RhRzU4Z2haaTRyTjh2WWtReV9FdV9wQ2w1ZDJPbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzUxMDcwNjAwLCJpYXQiOjE3NTA5OTU3OTgsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MDk5NTc5OCwic3ViIjoiYWNjZXNzX3Rva2VuIn0.huiU558VFNeV0jfekfWNKHGaTKUaSoFmkPmI_kdTu8c"
+	appId       string = "M0R4WW1PYU-100"
 	appSecret   string = "XKCP7PAISD"
 	redirectUrl string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
 )
@@ -334,14 +334,23 @@ func main() {
 
 	// WEBSOCKET EXAMPLES
 	// Data Socket (Market Data WebSocket)
-	wsResponse, wsErr := fyersgosdk.DataSocket(fyClient, fyersgosdk.DataSocketRequest{
-		Symbols: []string{"NSE:NH-EQ"},
-		DataType:    "SymbolUpdate",
+	wsErr := fyersgosdk.DataSocket(fyClient, fyersgosdk.DataSocketRequest{
+		Symbols:  []string{"NSE:NH-EQ"},
+		DataType: "SymbolUpdate",
+		Fields:   []string{"Ch", "Ltp", "Symbol"},
+	}, func(structData interface{}, jsonString string) {
+		if symbolModel, ok := structData.(fyersgosdk.SymbolUpdateResponse); ok {
+			fmt.Printf("Change: %f, LTP: %f, Symbol: %s\n", 
+				symbolModel.Ch, symbolModel.Ltp, symbolModel.Symbol)
+		}
 	})
+
+	// wsErr := fyersgosdk.DataSocketSimple(fyClient, fyersgosdk.DataSocketRequest{
+	// 	Symbols:  []string{"NSE:NH-EQ"},
+	// 	DataType: "SymbolUpdate",
+	// })
 	if wsErr != nil {
 		fmt.Printf("Data Socket Error: %v\n", wsErr)
-	} else {
-		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
 	}
 
 	// Order Socket (Order Updates WebSocket)

@@ -509,8 +509,9 @@ type OptionsChainItem struct {
 
 // Web Socket
 type DataSocketRequest struct {
-	Symbols []string
-	DataType    string
+	Symbols  []string
+	DataType string
+	Fields   []string // Optional: specify which fields to include in the response
 }
 
 type OrderSocketRequest struct {
