@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 func (c *Client) GetHistory(fyClient *Client, historyRequest HistoryRequest) (string, HistoryResponse, error) {
@@ -43,8 +44,8 @@ func (c *Client) GetStockQuotes(fyClient *Client, symbol string) (string, StockQ
 	headers := http.Header{}
 	headers.Add("Authorization", token)
 	queryParams := url.Values{}
-	queryParams.Add("symbol", symbol)
-	response, err := c.httpClient.DoRaw(http.MethodGet, StockQuotesURL, nil, headers)
+	queryParams.Add("symbols", symbol)
+	response, err := c.httpClient.Do(http.MethodGet, StockQuotesURL, queryParams, headers)
 	if err != nil {
 		return "", StockQuotesResponse{}, err
 	}
@@ -59,10 +60,12 @@ func (c *Client) GetMarketDepth(fyClient *Client, marketDepthRequest MarketDepth
 	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
 	headers := http.Header{}
 	headers.Add("Authorization", token)
+
 	queryParams := url.Values{}
 	queryParams.Add("symbol", marketDepthRequest.Symbol)
 	queryParams.Add("ohlcv_flag", marketDepthRequest.OHLCV)
-	response, err := c.httpClient.DoRaw(http.MethodGet, MarketDepthURL, nil, headers)
+
+	response, err := c.httpClient.Do(http.MethodGet, MarketDepthURL, queryParams, headers)
 	if err != nil {
 		return "", MarketDepthResponse{}, err
 	}
@@ -79,9 +82,9 @@ func (c *Client) GetOptionChain(fyClient *Client, optionChainRequest OptionChain
 	headers.Add("Authorization", token)
 	queryParams := url.Values{}
 	queryParams.Add("symbol", optionChainRequest.Symbol)
-	queryParams.Add("strikecount", optionChainRequest.StrikeCount)
+	queryParams.Add("strikecount", strconv.Itoa(optionChainRequest.StrikeCount))
 	queryParams.Add("timestamp", optionChainRequest.Timestamp)
-	response, err := c.httpClient.DoRaw(http.MethodGet, OptionChainURl, nil, headers)
+	response, err := c.httpClient.Do(http.MethodGet, OptionChainURl, queryParams, headers)
 	if err != nil {
 		return "", OptionChainResponse{}, err
 	}

@@ -391,21 +391,12 @@ type HistoryRequest struct {
 
 type HistoryResponse struct {
 	APIResponse
-	History []HistoryItem `json:"history"`
-}
-
-type HistoryItem struct {
-	Date   string  `json:"date"`
-	Open   float64 `json:"open"`
-	High   float64 `json:"high"`
-	Low    float64 `json:"low"`
-	Close  float64 `json:"close"`
-	Volume int     `json:"volume"`
+	Candles [][]interface{} `json:"candles"`
 }
 
 type StockQuotesResponse struct {
 	APIResponse
-	D []StockQuote `json:"d"`
+	Data []StockQuote `json:"d"`
 }
 
 type StockQuote struct {
@@ -435,20 +426,55 @@ type QuoteValues struct {
 	FyToken        string  `json:"fyToken"`
 	Tt             string  `json:"tt"`
 }
+
 type MarketDepthRequest struct {
 	Symbol string `json:"symbol"`
 	OHLCV  string `json:"ohlcv_flag,omitempty"`
 }
+
 type MarketDepthResponse struct {
 	APIResponse
-	D []string `json:"d"`
+	Data map[string]MarketDepthSymbol `json:"d"`
+}
+
+type MarketDepthSymbol struct {
+	TotalBuyQty  int          `json:"totalbuyqty"`
+	TotalSellQty int          `json:"totalsellqty"`
+	Ask          []DepthLevel `json:"ask"`
+	Bids         []DepthLevel `json:"bids"`
+	O            float64      `json:"o"`         // Open price
+	H            float64      `json:"h"`         // High price
+	L            float64      `json:"l"`         // Low price
+	C            float64      `json:"c"`         // Close price
+	Chp          float64      `json:"chp"`       // Change percentage
+	TickSize     float64      `json:"tick_Size"` // Tick size
+	Ch           float64      `json:"ch"`        // Change
+	Ltq          int          `json:"ltq"`       // Last traded quantity
+	Ltt          int64        `json:"ltt"`       // Last traded time
+	Ltp          float64      `json:"ltp"`       // Last traded price
+	V            int          `json:"v"`         // Volume
+	Atp          float64      `json:"atp"`       // Average traded price
+	LowerCkt     float64      `json:"lower_ckt"` // Lower circuit
+	UpperCkt     float64      `json:"upper_ckt"` // Upper circuit
+	Expiry       string       `json:"expiry"`    // Expiry date
+	Oi           int          `json:"oi"`        // Open interest
+	OiFlag       bool         `json:"oiflag"`    // Open interest flag
+	Pdoi         int          `json:"pdoi"`      // Previous day open interest
+	OiPercent    int          `json:"oipercent"` // Open interest percentage
+}
+
+type DepthLevel struct {
+	Price  float64 `json:"price"`
+	Volume int     `json:"volume"`
+	Ord    int     `json:"ord"`
 }
 
 type OptionChainRequest struct {
 	Symbol      string `json:"symbol"`
-	StrikeCount string `json:"strikecount,omitempty"`
+	StrikeCount int `json:"strikecount,omitempty"`
 	Timestamp   string `json:"timestamp,omitempty"`
 }
+
 type OptionChainResponse struct {
 	APIResponse
 	Data OptionChainData `json:"data"`
@@ -509,8 +535,8 @@ type OptionsChainItem struct {
 
 // Web Socket
 type DataSocketRequest struct {
-	Symbols []string
-	DataType    string
+	Symbols  []string
+	DataType string
 }
 
 type OrderSocketRequest struct {

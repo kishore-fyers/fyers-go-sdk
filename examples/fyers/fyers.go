@@ -1,15 +1,14 @@
 package main
 
 import (
-	"fmt"
 	fyersgosdk "fyers-go-sdk"
 )
 
 const (
 	clientId    string = "YK04391"
-	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6Ijk4NmMzYWE3MDlkZDQxMDJhN2M3NDBiZGRjMTg2NWRjIiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJlYjY5NmZiMzE5ZTJjZDdlOGM0NGUxNGViMzY3MjAxYzZiNjY5ODBkNmNmNmI5MzM0MmM0Mzg1YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzUwMjEyMjM5LCJpYXQiOjE3NTAxODIyMzksImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc1MDE4MjIzOSwic3ViIjoiYXV0aF9jb2RlIn0.ZFcuK_ZOcotrGCr7jMq7C2YSUKrg80VcBtAUrlePFaM"
-	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCb1hNWmxXLVlMYWU2MWdFaFpHR1B3enhBd0V4eU5uV1poc3Y3V0p0Y1RsVnJiVVVpRWdaNFM5SWpRN2c0ejN2ckVoR0o2dklWX19xZ3FrbkdyQ25vYXRkOGo4UDktM0kyakRxTjJZR2JLVklpN19FOD0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiIyZDVjZGZiMmZmMzU5NDg2YWFmNGQyOTViZWM0YjIzMTFlYzVmZTU0NDc1Mjc5MGUzZGZiMmFhNSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzUwOTg0MjAwLCJpYXQiOjE3NTA5MTA1NjUsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MDkxMDU2NSwic3ViIjoiYWNjZXNzX3Rva2VuIn0._6qyZsfbd2Ts1qB396OfPMWMXwNWr-P25m5Tys7kocQ"
-	appId       string = "Z0G0WQQT6T-101"
+	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6ImI3NzE4MmMyMTdhODQ4M2JiZjk3NzJhYTQ0Yjk1YjcxIiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzUxMzgzMDQxLCJpYXQiOjE3NTEzNTMwNDEsImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc1MTM1MzA0MSwic3ViIjoiYXV0aF9jb2RlIn0.9hSzBigEZ3mCr7FBNxcql1iqe2mZJWnkossL5z0nca8"
+	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCb1k0YnRwZGF5NE95dmhaRnNKRy1VUkhsVFpScTBETDN2WFBKSGtkbnROVDFOY21fSkVDZjViLXRLVEJQSE8xejBrQVlVc0RGUllmcHVrRzN2dkVMSWtXVWNvdE8tUzlldDNLeTh4cEtXMHJwZTF2TT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzUxNDE2MjAwLCJpYXQiOjE3NTEzNTMwNjksImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MTM1MzA2OSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.LNjJLSNEj6g1tHzaqkbqyq5f3Npse89baCPbjxcTruc"
+	appId       string = "M0R4WW1PYU-100"
 	appSecret   string = "XKCP7PAISD"
 	redirectUrl string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
 )
@@ -79,20 +78,20 @@ func main() {
 	// fmt.Println("order book by tag: ", orderBookByTag.OrderBook[0])
 
 	// Get order by id
-	// response, orderById, err := fyClient.GetOrderById(fyClient, "25061800364699")										 //check again
+	// response, orderById, err := fyClient.GetOrderById(fyClient, "25070100257946")										 //check again
 	// if err != nil {
 	// 	fmt.Printf("Error getting order by id: %v", err)
 	// }
 	// fmt.Println("order by id: ", response)
-	// fmt.Println("order by id: ", orderById.OrderBook[0])
+	// fmt.Println("order by id: ", orderById.OrderBook[0].Description)
 
 	// // Get positions
-	// response, positions, err := fyClient.GetPositions(fyClient)
+	// response,positions, err := fyClient.GetPositions(fyClient)
 	// if err != nil {
 	// 	fmt.Printf("Error getting positions: %v", err)
 	// }
 	// fmt.Println("positions: ", response)
-	// fmt.Println("positions: ", positions.NetPositions[0])
+	// fmt.Println("positions: ", positions.APIResponse.Code)
 
 	// // Get trade book
 	// response, tradeBook, err := fyClient.GetTradeBook(fyClient)
@@ -103,16 +102,16 @@ func main() {
 	// fmt.Println("trade book: ", tradeBook.TradeBook[0])
 
 	// // Get trade book by tag
-	// response, tradeBookByTag, err := fyClient.GetTradeBookByTag(fyClient, "1:Ordertag")
+	// response, tradeBookByTag, err := fyClient.GetTradeBookByTag(fyClient, "2:Exit")
 	// if err != nil {
 	// 	fmt.Printf("Error getting trade book by tag: %v", err)
 	// }
 	// fmt.Println("trade book by tag: ", response)
-	// fmt.Println("trade book by tag: ", tradeBookByTag.TradeBook[0])
+	// fmt.Println("trade book by tag: ", tradeBookByTag.TradeBook[0].ClientId)
 
 	// // Single Order Action
 	// response, singleOrderAction, err := fyClient.SingleOrderAction(fyClient, fyersgosdk.OrderRequest{
-	// 	Symbol:       "NSE:SBIN-EQ",
+	// 	Symbol:       "NSE:IDEA-EQ",
 	// 	Qty:          1,
 	// 	Type:         1,
 	// 	Side:         1,
@@ -124,7 +123,7 @@ func main() {
 	// 	OfflineOrder: false,
 	// 	StopLoss:     100,
 	// 	TakeProfit:   100,
-	// 	OrderTag:     "1:Ordertag",
+	// 	OrderTag:     "TESTEST",
 	// })
 	// if err != nil {
 	// 	fmt.Printf("Error getting single order action: %v", err)
@@ -162,21 +161,21 @@ func main() {
 	// 		Validity:     "IOC",
 	// 		Legs: fyersgosdk.Leg{
 	// 			Leg1: fyersgosdk.LegBody{
-	// 				Symbol:     "NSE:SBIN24JUNFUT",
+	// 				Symbol:     "NSE:SBIN25JULFUT",
 	// 				Qty:        750,
 	// 				Side:       1,
 	// 				Type:       1,
 	// 				LimitPrice: 800,
 	// 			},
 	// 			Leg2: fyersgosdk.LegBody{
-	// 				Symbol:     "NSE:SBIN24JULFUT",
+	// 				Symbol:     "NSE:SBIN25AUGFUT",
 	// 				Qty:        750,
 	// 				Side:       1,
 	// 				Type:       1,
 	// 				LimitPrice: 800,
 	// 			},
 	// 			Leg3: fyersgosdk.LegBody{
-	// 				Symbol:     "NSE:SBIN24JUN900CE",
+	// 				Symbol:     "NSE:SBIN25SEPFUT",
 	// 				Qty:        750,
 	// 				Side:       1,
 	// 				Type:       1,
@@ -290,24 +289,24 @@ func main() {
 	// Get history
 	// response, history, err := fyClient.GetHistory(fyClient, fyersgosdk.HistoryRequest{
 	// 	Symbol:     "NSE:SBIN-EQ",
-	// 	Resolution: "1",
-	// 	DateFormat: "dd-MM-yyyy",
-	// 	RangeFrom:  "2025-06-18",
-	// 	RangeTo:    "2025-06-19",
+	// 	Resolution: "30",
+	// 	DateFormat: "1",
+	// 	RangeFrom:  "2021-01-01",
+	// 	RangeTo:    "2021-01-02",
 	// })
 	// if err != nil {
 	// 	fmt.Printf("Error getting history: %v", err)
 	// }
 	// fmt.Println("history: ", response)
-	// fmt.Println("history: ", history.History[0])
+	// fmt.Println("history: ", history.Candles)
 
 	// // Get stock quotes
-	// response, stockQuotes, err := fyClient.GetStockQuotes(fyClient, "NSE:SBIN-EQ")
+	// response, stockQuotes , err := fyClient.GetStockQuotes(fyClient, "NSE:SBIN-EQ")
 	// if err != nil {
 	// 	fmt.Printf("Error getting stock quotes: %v", err)
 	// }
 	// fmt.Println("stock quotes: ", response)
-	// fmt.Println("stock quotes: ", stockQuotes.D[0])
+	// fmt.Println("stock quotes: ", stockQuotes.Data[0].V.Symbol)
 
 	// // Get market depth
 	// response, marketDepth, err := fyClient.GetMarketDepth(fyClient, fyersgosdk.MarketDepthRequest{
@@ -318,31 +317,30 @@ func main() {
 	// 	fmt.Printf("Error getting market depth: %v", err)
 	// }
 	// fmt.Println("market depth: ", response)
-	// fmt.Println("market depth: ", marketDepth.D[0])
+	// fmt.Println("market depth: ", marketDepth.Data["NSE:SBIN-EQ"].TotalBuyQty)
 
 	// // Get option chain
 	// response, optionChain, err := fyClient.GetOptionChain(fyClient, fyersgosdk.OptionChainRequest{
 	// 	Symbol:      "NSE:SBIN-EQ",
-	// 	Timestamp:   "1718745600",
-	// 	StrikeCount: "10",
+	// 	StrikeCount: 1,
 	// })
 	// if err != nil {
 	// 	fmt.Printf("Error getting option chain: %v", err)
 	// }
 	// fmt.Println("option chain: ", response)
-	// fmt.Println("option chain: ", optionChain.Data.OptionsChain[0])
+	// fmt.Println("option chain: ", optionChain.Data.OptionsChain)
 
 	// WEBSOCKET EXAMPLES
 	// Data Socket (Market Data WebSocket)
-	wsResponse, wsErr := fyersgosdk.DataSocket(fyClient, fyersgosdk.DataSocketRequest{
-		Symbols: []string{"NSE:NH-EQ"},
-		DataType:    "SymbolUpdate",
-	})
-	if wsErr != nil {
-		fmt.Printf("Data Socket Error: %v\n", wsErr)
-	} else {
-		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
-	}
+	// wsResponse, wsErr := fyersgosdk.DataSocket(fyClient, fyersgosdk.DataSocketRequest{
+	// 	Symbols: []string{"NSE:NH-EQ"},
+	// 	DataType:    "SymbolUpdate",
+	// })
+	// if wsErr != nil {
+	// 	fmt.Printf("Data Socket Error: %v\n", wsErr)
+	// } else {
+	// 	fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+	// }
 
 	// Order Socket (Order Updates WebSocket)
 	// wsResponse2, wsErr := fyersgosdk.OrderSocket(fyClient,fyersgosdk.OrderSocketRequest{

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 func (c *Client) GetOrderBook(fyClient *Client) (string, OrderBook, error) {
@@ -40,8 +41,10 @@ func (c *Client) GetOrderById(fyClient *Client, id string) (string, OrderBook, e
 	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
 	headers := http.Header{}
 	headers.Add("Authorization", token)
-	url := OrderByIdURL + id
-	response, err := c.httpClient.DoRaw(http.MethodGet, url, nil, headers)
+	queryParams := url.Values{}
+	queryParams.Add("id", id)
+
+	response, err := c.httpClient.Do(http.MethodGet, OrderByIdURL, queryParams, headers)
 	if err != nil {
 		return "", OrderBook{}, err
 	}
@@ -56,7 +59,7 @@ func (c *Client) GetPositions(fyClient *Client) (string, Position, error) {
 	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
 	headers := http.Header{}
 	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, OrderCheckMarginURL, nil, headers)
+	response, err := c.httpClient.DoRaw(http.MethodGet, PositionURL, nil, headers)
 	if err != nil {
 		return "", Position{}, err
 	}
@@ -86,8 +89,9 @@ func (c *Client) GetTradeBookByTag(fyClient *Client, tag string) (string, TradeB
 	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
 	headers := http.Header{}
 	headers.Add("Authorization", token)
-	url := TradeBookByTagURL + tag
-	response, err := c.httpClient.DoRaw(http.MethodGet, url, nil, headers)
+	queryParams := url.Values{}
+	queryParams.Add("order_tag", tag)
+	response, err := c.httpClient.Do(http.MethodGet, TradeBookByTagURL, queryParams, headers)
 	if err != nil {
 		return "", TradeBook{}, err
 	}

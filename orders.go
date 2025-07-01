@@ -50,11 +50,18 @@ func (c *Client) MultiOrderAction(fyClient *Client, orderRequests []OrderRequest
 	return string(response.Body), orderResp, nil
 }
 
-func (c *Client) MultiLegOrderAction(fyClient *Client, orderId string) (string, OrderResponse, error) {
+func (c *Client) MultiLegOrderAction(fyClient *Client, orderRequests []MultiLegOrderRequest) (string, OrderResponse, error) {
 	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
 	headers := http.Header{}
 	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, nil, headers)
+
+	// Marshal the order requests to JSON
+	requestBody, err := json.Marshal(orderRequests)
+	if err != nil {
+		return "", OrderResponse{}, fmt.Errorf("failed to marshal order requests: %w", err)
+	}
+
+	response, err := c.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, requestBody, headers)
 	if err != nil {
 		return "", OrderResponse{}, err
 	}
