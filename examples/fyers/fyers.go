@@ -1,13 +1,14 @@
 package main
 
 import (
+	"fmt"
 	fyersgosdk "fyers-go-sdk"
 )
 
 const (
 	clientId    string = "YK04391"
 	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6ImI3NzE4MmMyMTdhODQ4M2JiZjk3NzJhYTQ0Yjk1YjcxIiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzUxMzgzMDQxLCJpYXQiOjE3NTEzNTMwNDEsImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc1MTM1MzA0MSwic3ViIjoiYXV0aF9jb2RlIn0.9hSzBigEZ3mCr7FBNxcql1iqe2mZJWnkossL5z0nca8"
-	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCb1k0YnRwZGF5NE95dmhaRnNKRy1VUkhsVFpScTBETDN2WFBKSGtkbnROVDFOY21fSkVDZjViLXRLVEJQSE8xejBrQVlVc0RGUllmcHVrRzN2dkVMSWtXVWNvdE8tUzlldDNLeTh4cEtXMHJwZTF2TT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiI4N2Q3YTBmZTNmMGVjZDdhNzAwNzAyOTY1YTNkZWU3ZmYwNDA0OTBmOTQ3NzI0MWU3YWY5ZTljYSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzUxNDE2MjAwLCJpYXQiOjE3NTEzNTMwNjksImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MTM1MzA2OSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.LNjJLSNEj6g1tHzaqkbqyq5f3Npse89baCPbjxcTruc"
+	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCcFpLYU1iRlJBTWVXZnVuTExRa2ttd2tFM3ZIdlJRbzdxUVBmTjBmRm5uVXZXRDRndVpnekw4X2NNSTZBRWtCUktPemhqSTVqQlBFYy05SERIUEZGUW1tMER6NE9YOUZCZmRwLXQ1MllJQmZfWXpqQT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJjMDFlNDQ3ZDc1YzNjZDIwYTQ3YTQ0ZjA3NjJmNTM3Mjc5YjJmZWY4NGY4NzY4MTk4NTQwOTdkMiIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzY4MjY0MjAwLCJpYXQiOjE3NjgyMDM5MTYsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc2ODIwMzkxNiwic3ViIjoiYWNjZXNzX3Rva2VuIn0.GRxdraCQNX0vYBYlTQs3YkRUINit-rZvuJqbHAUSM3E"
 	appId       string = "M0R4WW1PYU-100"
 	appSecret   string = "XKCP7PAISD"
 	redirectUrl string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
@@ -329,6 +330,84 @@ func main() {
 	// }
 	// fmt.Println("option chain: ", response)
 	// fmt.Println("option chain: ", optionChain.Data.OptionsChain)
+
+	// Get alerts
+	// response, priceAlert, err := fyClient.GetAlerts(fyClient)
+	// if err != nil {
+	// 	fmt.Printf("Error getting alerts: %v\n", err)
+	// } else {
+	// 	fmt.Println("Get Alerts Response: ", response)
+	// 	if len(priceAlert.Data) > 0 {
+	// 		for id, item := range priceAlert.Data {
+	// 			fmt.Printf("Alert ID: %s, Symbol: %s, Value: %f\n", id, item.Symbol, item.Alert.Value)
+	// 			// We can use this alertId for other operations
+	// 		}
+	// 	}
+	// }
+
+	// // Example alert ID (found from GetAlerts)
+	// exampleAlertId := ""
+	// for id := range priceAlert.Data {
+	// 	exampleAlertId = id
+	// 	break
+	// }
+	// fmt.Println("Example Alert ID available for use: ", exampleAlertId)
+
+	// Create alert
+	// alertReq := fyersgosdk.AlertRequest{
+	// 	Symbol:         "NSE:SBIN-EQ",
+	// 	Name:           "NSE:SBIN-EQ alert",
+	// 	Agent:          "fyers-api",
+	// 	AlertType:      1,
+	// 	ComparisonType: "LTP",
+	// 	Condition:      "GT",
+	// 	Value:          600.0,
+	// }
+	// response, createAlert, err := fyClient.CreateAlert(fyClient, alertReq)
+	// if err != nil {
+	// 	fmt.Printf("Error creating alert: %v\n", err)
+	// } else {
+	// 	fmt.Println("Create Alert Response: ", response)
+	// }
+
+	// Toggle alert
+	// if exampleAlertId != "" {
+	// 	response, toggleAlert, err := fyClient.ToggleAlert(fyClient, exampleAlertId)
+	// 	if err != nil {
+	// 		fmt.Printf("Error toggling alert: %v\n", err)
+	// 	} else {
+	// 		fmt.Println("Toggle Alert Response: ", response)
+	// 	}
+	// }
+
+	// Delete alert
+	// if exampleAlertId != "" {
+	// 	response, deleteAlert, err := fyClient.DeleteAlert(fyClient, exampleAlertId)
+	// 	if err != nil {
+	// 		fmt.Printf("Error deleting alert: %v\n", err)
+	// 	} else {
+	// 		fmt.Println("Delete Alert Response: ", response)
+	// 	}
+	// }
+
+	// Update alert
+	// alertReq := fyersgosdk.AlertRequest{
+	// 	Symbol:         "NSE:SBIN-EQ",
+	// 	Name:           "NSE:NIFTY50-INDEX",
+	// 	Agent:          "fyers-api",
+	// 	AlertType:      1,
+	// 	ComparisonType: "LTP",
+	// 	Condition:      "GT",
+	// 	Value:          25423.49,
+	// }
+	// response, updateAlert, err := fyClient.UpdateAlert(fyClient, "6137795", alertReq)
+	// if err != nil {
+	// 	fmt.Printf("Error updating alert: %v\n", err)
+	// } else {
+	// 	fmt.Println("Update Alert Response: ", response)
+	// 	fmt.Println("Update Alert Message: ", updateAlert.Message)
+	// }
+
 
 	// WEBSOCKET EXAMPLES
 	// Data Socket (Market Data WebSocket)

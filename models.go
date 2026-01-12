@@ -471,7 +471,7 @@ type DepthLevel struct {
 
 type OptionChainRequest struct {
 	Symbol      string `json:"symbol"`
-	StrikeCount int `json:"strikecount,omitempty"`
+	StrikeCount int    `json:"strikecount,omitempty"`
 	Timestamp   string `json:"timestamp,omitempty"`
 }
 
@@ -541,4 +541,43 @@ type DataSocketRequest struct {
 
 type OrderSocketRequest struct {
 	TradeOperations []string
+}
+
+// Alerts
+
+type AlertsResponse struct {
+	APIResponse
+	Data map[string]AlertItem `json:"data"`
+}
+
+type AlertItem struct {
+	FyToken string       `json:"fyToken"`
+	Symbol  string       `json:"symbol"`
+	Alert   AlertDetails `json:"alert"`
+}
+
+type AlertDetails struct {
+	ComparisonType string  `json:"comparisonType"`
+	Condition      string  `json:"condition"`
+	Name           string  `json:"name"`
+	Type           string  `json:"type"`
+	Value          float64 `json:"value"`
+	TriggeredAt    string  `json:"triggeredAt"`
+	CreatedAt      string  `json:"createdAt"`
+	Status         int     `json:"status"`
+}
+
+type AlertRequest struct {
+	Symbol         string  `json:"symbol"`
+	Agent          string  `json:"agent"`
+	AlertType      int     `json:"alert-type"`
+	ComparisonType string  `json:"comparisonType"`
+	Condition      string  `json:"condition"`
+	Value          float64 `json:"value"`
+	Name           string  `json:"name"`
+}
+
+type Alert struct {
+	AlertId string `json:"alert_id"`
+	Symbol  string `json:"symbol"`
 }

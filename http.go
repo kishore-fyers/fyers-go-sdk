@@ -37,7 +37,6 @@ type HTTPResponse struct {
 	Response *http.Response
 }
 
-
 func NewHTTPClient(h *http.Client, hLog *log.Logger, debug bool) HTTPClient {
 	if hLog == nil {
 		hLog = log.New(os.Stdout, "base.HTTP: ", log.Ldate|log.Ltime|log.Lshortfile)
@@ -76,8 +75,8 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 		postBody io.Reader
 	)
 
-	// Encode POST / PUT params.
-	if method == http.MethodPost || method == http.MethodPut {
+	// Encode POST / PUT / DELETE params.
+	if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
 		postBody = bytes.NewReader(reqBody)
 	}
 
@@ -92,13 +91,13 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 
 	// If a content-type isn't set, set the default one.
 	if req.Header.Get("Content-Type") == "" {
-		if method == http.MethodPost || method == http.MethodPut {
+		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		}
 	}
 
-	// If the request method is GET or DELETE, add the params as QueryString.
-	if method == http.MethodGet || method == http.MethodDelete {
+	// If the request method is GET (or DELETE without a JSON body), add the params as QueryString.
+	if method == http.MethodGet || (method == http.MethodDelete && req.Header.Get("Content-Type") != "application/json") {
 		req.URL.RawQuery = string(reqBody)
 	}
 
