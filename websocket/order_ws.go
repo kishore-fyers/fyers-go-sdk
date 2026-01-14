@@ -223,6 +223,9 @@ func (f *FyersOrderSocket) parseOrderData(msg map[string]interface{}) map[string
 				if orgOrdStatus, exists := ordMap["org_ord_status"]; exists {
 					orderData["orderNumStatus"] = fmt.Sprintf("%v:%v", id, orgOrdStatus)
 				}
+				if OrdFyersId, exists := ordMap["id_fyers"]; exists {
+					orderData["id_fyers"] = OrdFyersId
+				}
 			}
 		}
 	}
