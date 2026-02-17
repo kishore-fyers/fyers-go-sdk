@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 
 	fyersgosdk "fyers-go-sdk"
@@ -35,21 +34,15 @@ func main() {
 		fmt.Printf("Error getting profile: %v\n", err)
 		return
 	}
-	fmt.Println("profile (raw):", response)
+	fmt.Println("profile:", response)
 
+	// Get funds
 	response, err = fyModel.GetFunds()
 	if err != nil {
 		fmt.Printf("Error getting funds: %v\n", err)
 		return
 	}
-	fmt.Println("funds (raw):", response)
-
-	// Optionally parse to access fields
-	var profile struct {
-		DdpiEnabled bool `json:"ddpi_enabled"`
-	}
-	_ = json.Unmarshal([]byte(response), &profile)
-	fmt.Println("profile ddpi_enabled:", profile.DdpiEnabled)
+	fmt.Println("funds:", response)
 
 	// Get holdings (returns raw JSON string)
 	holdingsResp, err := fyModel.GetHoldings()
@@ -57,7 +50,7 @@ func main() {
 		fmt.Printf("Error getting holdings: %v\n", err)
 		return
 	}
-	fmt.Println("holdings (raw):", holdingsResp)
+	fmt.Println("holdings:", holdingsResp)
 
 	// Logout
 	// response, err := fyModel.Logout()
