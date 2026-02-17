@@ -1,22 +1,13 @@
 package fyersgosdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
-func (c *Client) GetMarketStatus(fyClient *Client) (string, MarketStatus, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, MarketStatusURL, nil, headers)
+func (m *FyersModel) GetMarketStatus() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodGet, MarketStatusURL, nil, m.authHeader())
 	if err != nil {
-		return "", MarketStatus{}, err
+		return "", err
 	}
-	var marketStatus MarketStatus
-	if err := json.Unmarshal(response.Body, &marketStatus); err != nil {
-		return "", MarketStatus{}, err
-	}
-	return string(response.Body), marketStatus, nil
+	return string(resp.Body), nil
 }

@@ -6,68 +6,38 @@ import (
 	"net/http"
 )
 
-func (c *Client) SingleOrderAction(fyClient *Client, orderRequest OrderRequest) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-
-	// Marshal the order request to JSON
-	requestBody, err := json.Marshal(orderRequest)
+func (m *FyersModel) SingleOrderAction(orderRequest OrderRequest) (string, error) {
+	body, err := json.Marshal(orderRequest)
 	if err != nil {
-		return "", OrderResponse{}, fmt.Errorf("failed to marshal order request: %w", err)
+		return "", fmt.Errorf("marshal order request: %w", err)
 	}
-
-	response, err := c.httpClient.DoRaw(http.MethodPost, SingleOrderActionURL, requestBody, headers)
+	resp, err := m.httpClient.DoRaw(http.MethodPost, SingleOrderActionURL, body, m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderResp OrderResponse
-	if err := json.Unmarshal(response.Body, &orderResp); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderResp, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) MultiOrderAction(fyClient *Client, orderRequests []OrderRequest) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-
-	// Marshal the order requests to JSON
-	requestBody, err := json.Marshal(orderRequests)
+func (m *FyersModel) MultiOrderAction(orderRequests []OrderRequest) (string, error) {
+	body, err := json.Marshal(orderRequests)
 	if err != nil {
-		return "", OrderResponse{}, fmt.Errorf("failed to marshal order requests: %w", err)
+		return "", fmt.Errorf("marshal order requests: %w", err)
 	}
-
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultipleOrderActionURL, requestBody, headers)
+	resp, err := m.httpClient.DoRaw(http.MethodPost, MultipleOrderActionURL, body, m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderResp OrderResponse
-	if err := json.Unmarshal(response.Body, &orderResp); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderResp, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) MultiLegOrderAction(fyClient *Client, orderRequests []MultiLegOrderRequest) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-
-	// Marshal the order requests to JSON
-	requestBody, err := json.Marshal(orderRequests)
+func (m *FyersModel) MultiLegOrderAction(orderRequests []MultiLegOrderRequest) (string, error) {
+	body, err := json.Marshal(orderRequests)
 	if err != nil {
-		return "", OrderResponse{}, fmt.Errorf("failed to marshal order requests: %w", err)
+		return "", fmt.Errorf("marshal order requests: %w", err)
 	}
-
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, requestBody, headers)
+	resp, err := m.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, body, m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderResp OrderResponse
-	if err := json.Unmarshal(response.Body, &orderResp); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderResp, nil
+	return string(resp.Body), nil
 }

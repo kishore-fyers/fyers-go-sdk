@@ -18,6 +18,14 @@ type Client struct {
 	httpClient HTTPClient
 }
 
+// FyersModel is the API client for profile, orders, positions, data, and alerts.
+// Use Client only for GetLoginURL and GenerateAccessToken; use FyersModel for all other API calls.
+type FyersModel struct {
+	clientId   string
+	token      string
+	httpClient HTTPClient
+}
+
 type ClientOptions struct {
 	Debug      bool
 	Logger     *log.Logger

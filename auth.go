@@ -42,6 +42,22 @@ func (c *Client) GetLoginURL() string {
 	return fmt.Sprintf("%s&client_id=%s&redirect_uri=%s&response_type=%s&state=%s", GenerateAuthCodeURL, c.appId, c.redirectUrl, "code", "sample_state")
 }
 
+// NewFyersModel creates an API client with client_id and access token.
+// Use this for all API calls after obtaining the access token via Client.GenerateAccessToken.
+func NewFyersModel(clientId, token string) *FyersModel {
+	return &FyersModel{
+		clientId:   clientId,
+		token:      token,
+		httpClient: NewHTTPClient(nil, nil, false),
+	}
+}
+
+func (m *FyersModel) authHeader() http.Header {
+	h := http.Header{}
+	h.Set("Authorization", fmt.Sprintf("%s:%s", m.clientId, m.token))
+	return h
+}
+
 func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string, AccessTokenResponse, error) {
 	// Get SHA256 checksum
 	h := sha256.New()
