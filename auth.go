@@ -44,17 +44,17 @@ func (c *Client) GetLoginURL() string {
 
 // NewFyersModel creates an API client with client_id and access token.
 // Use this for all API calls after obtaining the access token via Client.GenerateAccessToken.
-func NewFyersModel(clientId, token string) *FyersModel {
+func NewFyersModel(appId, accessToken string) *FyersModel {
 	return &FyersModel{
-		clientId:   clientId,
-		token:      token,
+		appId:   appId,
+		accessToken:      accessToken,
 		httpClient: NewHTTPClient(nil, nil, false),
 	}
 }
 
 func (m *FyersModel) authHeader() http.Header {
 	h := http.Header{}
-	h.Set("Authorization", fmt.Sprintf("%s:%s", m.clientId, m.token))
+	h.Set("Authorization", fmt.Sprintf("%s:%s", m.appId, m.accessToken))
 	return h
 }
 

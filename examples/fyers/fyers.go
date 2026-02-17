@@ -7,11 +7,11 @@ import (
 )
 
 const (
-	clientId    string = "YK04391"
-	authToken   string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-	accessToken string = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-	appId       string = "M0R4WW1PYU-100"
-	appSecret   string = "XKCP7PAISD"
+	clientId    string = ""
+	authToken   string = ""
+	accessToken string = ""
+	appId       string = "Z0G0WQQT6T-101"
+	appSecret   string = ""
 	redirectUrl string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
 )
 
@@ -372,15 +372,16 @@ func main() {
 
 	// WEBSOCKET EXAMPLES (these may still use fyClient if the SDK expects Client for websocket auth)
 	// Data Socket (Market Data WebSocket)
-	// wsResponse, wsErr := fyersgosdk.DataSocket(fyClient, fyersgosdk.DataSocketRequest{
-	// 	Symbols:   []string{"NSE:NH-EQ"},
-	// 	DataType:  "SymbolUpdate",
-	// })
-	// if wsErr != nil {
-	// 	fmt.Printf("Data Socket Error: %v\n", wsErr)
-	// } else {
-	// 	fmt.Printf("Data Socket Response: %+v\n", wsResponse)
-	// }
+	wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
+		Symbols:  []string{"NSE:SBIN-EQ"},
+		DataType: "SymbolUpdate",
+		Mode:     true,
+	})
+	if wsErr != nil {
+		fmt.Printf("Data Socket Error: %v\n", wsErr)
+	} else {
+		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+	}
 
 	// Order Socket (Order Updates WebSocket)
 	// wsResponse2, wsErr := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{

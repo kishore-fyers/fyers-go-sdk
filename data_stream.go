@@ -10,16 +10,16 @@ import (
 )
 
 // Data Socket Example
-func DataSocket(fyClient *Client, webSocketRequest DataSocketRequest) (map[string]interface{}, error) {
+func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[string]interface{}, error) {
 	// Replace with your actual access token
-	accessTokenStr := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
+	accessTokenStr := fmt.Sprintf("%s:%s", fyModel.appId, fyModel.accessToken)
 	// accessToken := "Z0G0WQQT6T-101:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCb1dpTC1kYlZrbXZGVmJwQk85RVBwWnpOMEdIVFBxY09zNXEwOTRjamZQd3RKSU9IMDJMd3pLdFF0ZDA5X2RIaHF1SUEtUUFvTWpXT1dldk1kVi03R0RRdjIzckxoYzRsbFh6c1hTeTg5Vzk5ZWNJbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiIyZDVjZGZiMmZmMzU5NDg2YWFmNGQyOTViZWM0YjIzMTFlYzVmZTU0NDc1Mjc5MGUzZGZiMmFhNSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzUwODExNDAwLCJpYXQiOjE3NTA3Mzc2NjIsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MDczNzY2Miwic3ViIjoiYWNjZXNzX3Rva2VuIn0.QLPwwLxeXNuYEgRldhIBGGeZ4IaXXr9ogYqmZFRGgh0"
 
 	// Create a FyersDataSocket instance
 	dataSocket := fyersws.NewFyersDataSocket(
 		accessTokenStr, // Access token in the format "appid:accesstoken"
 		"",             // Log path - leave empty to auto-create logs in the current directory
-		false,          // Lite mode disabled. Set to true if you want a lite response
+		webSocketRequest.Mode,          // Lite mode disabled. Set to true if you want a lite response
 		false,          // Save response in a log file instead of printing it
 		true,           // Enable auto-reconnection to WebSocket on disconnection
 		onDataConnect,  // Callback function to subscribe to data upon connection
