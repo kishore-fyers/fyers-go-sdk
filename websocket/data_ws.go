@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -18,37 +19,41 @@ import (
 
 // FyersDataSocket represents the main WebSocket client
 type FyersDataSocket struct {
-	url              string
-	accessToken      string
-	hsmToken         string
-	logPath          string
-	lite             bool
-	maxRetry         int
-	source           string
-	channelNum       int
-	channels         []int
-	runningChannels  map[int]bool
-	dataType         string
-	OnMessage        func(map[string]interface{})
-	OnError          func(map[string]interface{})
-	OnOpen           func()
-	OnClose          func(map[string]interface{})
-	updateTick       bool
-	ackCount         int
-	wsRun            *websocket.Conn
-	writeToFile      bool
-	backgroundFlag   bool
-	updateCount      int
-	liteResp         map[string]interface{}
-	channelSymbol    []string
-	symbolDict       map[string]string
-	scripsCount      map[string]int
-	scripsPerChannel map[int][]string
-	restartFlag      bool
-	mu               sync.Mutex
-	connected        bool
-	messageQueue     chan []byte
-	stopChan         chan bool
+	url                  string
+	accessToken          string
+	hsmToken             string
+	logPath              string
+	lite                 bool
+	maxRetry             int
+	source               string
+	channelNum           int
+	channels             []int
+	runningChannels      map[int]bool
+	dataType             string
+	OnMessage            func(map[string]interface{})
+	OnError              func(map[string]interface{})
+	OnOpen               func()
+	OnClose              func(map[string]interface{})
+	updateTick           bool
+	ackCount             int
+	wsRun                *websocket.Conn
+	writeToFile          bool
+	backgroundFlag       bool
+	updateCount          int
+	liteResp             map[string]interface{}
+	channelSymbol        []string
+	symbolDict           map[string]string
+	scripsCount          map[string]int
+	scripsPerChannel     map[int][]string
+	restartFlag          bool
+	reconnectAttempts    int
+	reconnectDelay       int
+	maxReconnectAttempts int
+	mu                   sync.Mutex
+	connected            bool
+	messageQueue         chan []byte
+	stopChan             chan bool
+	stopOnce             sync.Once
 
 	// State management for continuous updates (like Python)
 	scripsSym     map[uint16]string                 // topic_id -> topic_name for scrips
@@ -56,15 +61,30 @@ type FyersDataSocket struct {
 	dpSym         map[uint16]string                 // topic_id -> topic_name for depth
 	resp          map[string]map[string]interface{} // topic_name -> response data
 	fieldMappings map[string][]string               // Add this line
+
+	// lastLtpScrips/lastLtpIndex: dedup lite ticks (emit only when LTP changes, match Python). Key = topic name, value = last raw int32 LTP.
+	lastLtpScrips map[string]int32
+	lastLtpIndex  map[string]int32
+
+	// Subscription cache: on reconnect we re-subscribe without calling the symbol-token API (avoids "unexpected EOF" / subscription failed when API is flaky).
+	cachedSubscribeSymbols  []string
+	cachedSubscribeDataType string
+	cachedSubscribeDataDict map[string]string
 }
 
-// NewFyersDataSocket creates a new FyersDataSocket instance
+// readDeadlineDuration is the max time to wait for a message. Prevents blocking forever when network is lost (no internet).
+// Fixed duration (e.g. 30s) so timeout triggers sooner regardless of maxReconnectAttempts.
+const readDeadlineDuration = 30 * time.Second
+
+// NewFyersDataSocket creates a new FyersDataSocket instance.
+// reconnectRetry sets max reconnect attempts; default 5. Same rule as Python: cap at 50, use min(50, reconnectRetry).
 func NewFyersDataSocket(
 	accessToken string,
 	logPath string,
 	liteMode bool,
 	writeToFile bool,
 	reconnect bool,
+	reconnectRetry int,
 	onConnect func(),
 	onClose func(map[string]interface{}),
 	onError func(map[string]interface{}),
@@ -76,42 +96,55 @@ func NewFyersDataSocket(
 		fmt.Printf("Failed to load field mappings: %v\n", err)
 		return nil
 	}
+	if reconnectRetry <= 0 {
+		reconnectRetry = 5
+	}
+	maxReconnectAttempts := 50
+	if reconnectRetry < maxReconnectAttempts {
+		maxReconnectAttempts = reconnectRetry
+	}
+	// fmt.Printf("[FyersDataSocket RECONNECT] init: reconnect=%v, maxReconnectAttempts=%d\n", reconnect, maxReconnectAttempts)
 	return &FyersDataSocket{
-		url:              "wss://socket.fyers.in/hsm/v1-5/prod",
-		accessToken:      accessToken,
-		hsmToken:         "",
-		logPath:          logPath,
-		lite:             liteMode,
-		maxRetry:         5,
-		source:           "GoSDK-1.0.0",
-		channelNum:       11,
-		channels:         []int{},
-		runningChannels:  make(map[int]bool),
-		dataType:         "",
-		OnMessage:        onMessage,
-		OnError:          onError,
-		OnOpen:           onConnect,
-		OnClose:          onClose,
-		updateTick:       false,
-		ackCount:         0,
-		wsRun:            nil,
-		writeToFile:      writeToFile,
-		backgroundFlag:   false,
-		updateCount:      0,
-		liteResp:         make(map[string]interface{}),
-		channelSymbol:    []string{},
-		symbolDict:       make(map[string]string),
-		scripsCount:      make(map[string]int),
-		scripsPerChannel: make(map[int][]string),
-		restartFlag:      reconnect,
-		connected:        false,
-		messageQueue:     make(chan []byte, 1000),
-		stopChan:         make(chan bool),
-		scripsSym:        make(map[uint16]string),
-		indexSym:         make(map[uint16]string),
-		dpSym:            make(map[uint16]string),
-		resp:             make(map[string]map[string]interface{}),
-		fieldMappings:    fieldMappings, // Set the field
+		url:                  "wss://socket.fyers.in/hsm/v1-5/prod",
+		accessToken:          accessToken,
+		hsmToken:             "",
+		logPath:              logPath,
+		lite:                 liteMode,
+		maxRetry:             reconnectRetry,
+		source:               "GoSDK-1.0.0",
+		channelNum:           11,
+		channels:             []int{},
+		runningChannels:      make(map[int]bool),
+		dataType:             "",
+		OnMessage:            onMessage,
+		OnError:              onError,
+		OnOpen:               onConnect,
+		OnClose:              onClose,
+		updateTick:           false,
+		ackCount:             0,
+		wsRun:                nil,
+		writeToFile:          writeToFile,
+		backgroundFlag:       false,
+		updateCount:          0,
+		liteResp:             make(map[string]interface{}),
+		channelSymbol:        []string{},
+		symbolDict:           make(map[string]string),
+		scripsCount:          make(map[string]int),
+		scripsPerChannel:     make(map[int][]string),
+		restartFlag:          reconnect,
+		reconnectAttempts:    0,
+		reconnectDelay:       0,
+		maxReconnectAttempts: maxReconnectAttempts,
+		connected:            false,
+		messageQueue:         make(chan []byte, 1000),
+		stopChan:             make(chan bool),
+		scripsSym:            make(map[uint16]string),
+		indexSym:             make(map[uint16]string),
+		dpSym:                make(map[uint16]string),
+		resp:                 make(map[string]map[string]interface{}),
+		fieldMappings:        fieldMappings,
+		lastLtpScrips:        make(map[string]int32),
+		lastLtpIndex:         make(map[string]int32),
 	}
 }
 
@@ -152,6 +185,102 @@ func loadFieldMappingsOnce() (map[string][]string, error) {
 		}
 	}
 	return fieldMappings, nil
+}
+
+var (
+	marshalMappings     map[string][]string
+	marshalMappingsOnce sync.Once
+)
+
+func getMappingsForMarshal() map[string][]string {
+	marshalMappingsOnce.Do(func() {
+		marshalMappings, _ = loadFieldMappingsOnce()
+	})
+	return marshalMappings
+}
+
+// buildOrderedKeys returns keys in data_val / index_val / depth order, then ch/chp, then any remainder.
+func buildOrderedKeys(resp map[string]interface{}, mappings map[string][]string) []string {
+	if mappings == nil {
+		// fallback: return keys in map iteration order (undefined)
+		keys := make([]string, 0, len(resp))
+		for k := range resp {
+			keys = append(keys, k)
+		}
+		return keys
+	}
+	seen := make(map[string]bool)
+	ordered := make([]string, 0, len(resp))
+
+	dataType, _ := resp["type"].(string)
+	var fieldOrder []string
+	switch dataType {
+	case "sf", "scrips":
+		fieldOrder = mappings["data_val"]
+	case "if":
+		fieldOrder = mappings["index_val"]
+	case "dp":
+		fieldOrder = mappings["depthvalue"]
+	}
+
+	for _, key := range fieldOrder {
+		if _, exists := resp[key]; exists {
+			ordered = append(ordered, key)
+			seen[key] = true
+		}
+	}
+	for _, key := range []string{"ch", "chp"} {
+		if _, exists := resp[key]; exists && !seen[key] {
+			ordered = append(ordered, key)
+			seen[key] = true
+		}
+	}
+	// Remainder: use fixed order so lite mode (ltp, symbol, type) is deterministic: ltp already from fieldOrder, then symbol, type.
+	for _, key := range []string{"symbol", "type"} {
+		if _, exists := resp[key]; exists && !seen[key] {
+			ordered = append(ordered, key)
+			seen[key] = true
+		}
+	}
+	// Any other keys in sorted order for determinism (Go map iteration is random).
+	var remainder []string
+	for key := range resp {
+		if !seen[key] {
+			remainder = append(remainder, key)
+		}
+	}
+	sort.Strings(remainder)
+	ordered = append(ordered, remainder...)
+	return ordered
+}
+
+// MarshalDataResponseInOrder marshals the data response map to JSON with keys in the same order
+// as the Fyers data_val / index_val / depth feed: ltp, vol_traded_today, ..., type, symbol, ch, chp.
+// Use this when you need output order to match the Python SDK or a fixed field order.
+func MarshalDataResponseInOrder(resp map[string]interface{}) ([]byte, error) {
+	if resp == nil {
+		return []byte("null"), nil
+	}
+	mappings := getMappingsForMarshal()
+	orderedKeys := buildOrderedKeys(resp, mappings)
+	var buf strings.Builder
+	buf.Grow(512)
+	buf.WriteByte('{')
+	for i, key := range orderedKeys {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		keyBytes, _ := json.Marshal(key)
+		buf.Write(keyBytes)
+		buf.WriteByte(':')
+		valBytes, err := json.Marshal(resp[key])
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(valBytes)
+	}
+	buf.WriteByte('}')
+	return []byte(buf.String()), nil
 }
 
 // AccessTokenToHSMToken converts access token to HSM token by decoding JWT
@@ -263,17 +392,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	// Extract hsm_key
 	if hsmKey, exists := payload["hsm_key"]; exists {
 		f.hsmToken = hsmKey.(string)
-
-		// Display authentication success message
-		authResponse := map[string]interface{}{
-			"type":    AUTH_TYPE,
-			"code":    200,
-			"message": AUTH_SUCCESS,
-			"s":       "ok",
-		}
-		jsonData, _ := json.Marshal(authResponse)
-		fmt.Printf("Response: %s\n", string(jsonData))
-
+		// Do not print here: auth success is reported via OnMessage when server responds after Connect()
 		return true
 	}
 
@@ -301,8 +420,19 @@ func (f *FyersDataSocket) Connect() error {
 		return err
 	}
 
+	f.mu.Lock()
+	_ = f.reconnectAttempts > 0 // wasReconnect (debug commented)
 	f.wsRun = conn
 	f.connected = true
+	f.reconnectAttempts = 0
+	f.reconnectDelay = 0
+	f.mu.Unlock()
+
+	// if wasReconnect {
+	// 	fmt.Printf("[FyersDataSocket RECONNECT] on_open: reconnection successful, reset attempt counter and delay\n")
+	// } else {
+	// 	fmt.Printf("[FyersDataSocket RECONNECT] on_open: first connection established\n")
+	// }
 
 	// Start message processing goroutine
 	go f.processMessageQueue()
@@ -383,23 +513,130 @@ func (f *FyersDataSocket) createAuthMessage() []byte {
 	return buffer
 }
 
-// readMessages reads messages from WebSocket
+// readMessages reads messages from WebSocket. On connection error, runs reconnect logic (same as Python __on_close) when restartFlag is true.
+// A read deadline is set so that when the network is lost we get a timeout error and can reconnect instead of blocking forever.
 func (f *FyersDataSocket) readMessages() {
 	for {
 		select {
 		case <-f.stopChan:
 			return
 		default:
-			_, message, err := f.wsRun.ReadMessage()
-			if err != nil {
-				if f.OnError != nil {
-					f.OnError(map[string]interface{}{"error": err.Error()})
+		}
+
+		f.mu.Lock()
+		conn := f.wsRun
+		f.mu.Unlock()
+		if conn == nil {
+			return
+		}
+
+		conn.SetReadDeadline(time.Now().Add(readDeadlineDuration))
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			f.mu.Lock()
+			f.wsRun = nil
+			f.connected = false
+			restartFlag := f.restartFlag
+			maxAttempts := f.maxReconnectAttempts
+			_ = f.reconnectAttempts // attempts (debug commented)
+			f.mu.Unlock()
+
+			// if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "deadline")) {
+			// 	fmt.Printf("[FyersDataSocket RECONNECT] on_close: read deadline/timeout (no data) -> triggering reconnect: %v\n", err)
+			// }
+			// fmt.Printf("[FyersDataSocket RECONNECT] on_close: error=%v, restartFlag=%v, attempts=%d/%d\n", err, restartFlag, attempts, maxAttempts)
+
+			if f.OnError != nil {
+				errMsg := err.Error()
+				if strings.Contains(errMsg, "timeout") || strings.Contains(errMsg, "deadline") {
+					errMsg = "Connection timed out"
+				}
+				f.OnError(map[string]interface{}{"error": errMsg})
+			}
+
+			if !restartFlag {
+				// fmt.Printf("[FyersDataSocket RECONNECT] reconnection disabled (restartFlag=false); invoking OnClose\n")
+				if f.OnClose != nil {
+					f.OnClose(map[string]interface{}{
+						"code":    SUCCESS_CODE,
+						"message": CONNECTION_CLOSED,
+						"s":       SUCCESS,
+					})
 				}
 				return
 			}
 
-			f.handleMessage(message)
+			// fmt.Printf("[FyersDataSocket RECONNECT] entering runReconnectLoop (maxAttempts=%d)\n", maxAttempts)
+			f.runReconnectLoop(maxAttempts)
+			return
 		}
+
+		f.handleMessage(message)
+	}
+}
+
+// runReconnectLoop runs the same logic as Python __on_close reconnect path: backoff, clear state, Connect(); loops until success or max attempts. Does not close stopChan.
+func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
+	for {
+		select {
+		case <-f.stopChan:
+			// fmt.Printf("[FyersDataSocket RECONNECT] runReconnectLoop: stopChan received, exiting\n")
+			return
+		default:
+		}
+
+		f.mu.Lock()
+		attempts := f.reconnectAttempts
+		f.mu.Unlock()
+
+		if attempts >= maxAttempts {
+			// fmt.Printf("[FyersDataSocket RECONNECT] giving up: max attempts reached (%d), invoking OnClose\n", maxAttempts)
+			if f.OnClose != nil {
+				f.OnClose(map[string]interface{}{
+					"code":    SUCCESS_CODE,
+					"message": MAX_RECONNECT_ATTEMPTS_REACHED,
+					"s":       ERROR,
+				})
+			}
+			return
+		}
+
+		attemptNum := attempts + 1
+		_ = attemptNum
+		// fmt.Printf("[FyersDataSocket RECONNECT] will retry: attempt %d of %d\n", attemptNum, maxAttempts)
+		// fmt.Printf("Attempting reconnect %d of %d...\n", attemptNum, maxAttempts)
+
+		f.mu.Lock()
+		delay := f.reconnectDelay
+		if attempts%5 == 0 {
+			f.reconnectDelay += 5
+			delay = f.reconnectDelay
+		}
+		f.mu.Unlock()
+
+		if delay > 0 {
+			// fmt.Printf("[FyersDataSocket RECONNECT] backoff: Reconnection backoff: waiting %ds before reconnect (delay increases by 5s every 5 attempts).\n", delay)
+			select {
+			case <-f.stopChan:
+				// fmt.Printf("[FyersDataSocket RECONNECT] backoff interrupted by stopChan\n")
+				return
+			case <-time.After(time.Duration(delay) * time.Second):
+			}
+		}
+
+		f.mu.Lock()
+		f.reconnectAttempts++
+		f.scripsPerChannel[f.channelNum] = nil
+		// Do not clear symbolDict on reconnect (like Python: symbol_token is kept). OnOpen will re-subscribe and we'll repopulate from cache if needed.
+		f.mu.Unlock()
+
+		// fmt.Printf("[FyersDataSocket RECONNECT] clearing state and calling Connect() for attempt %d\n", attemptNum)
+		err := f.Connect()
+		if err == nil {
+			// fmt.Printf("[FyersDataSocket RECONNECT] Connect() succeeded, returning from runReconnectLoop\n")
+			return
+		}
+		// Retry silently (like Python): do not call OnError for each failed attempt; only the initial "Connection timed out" was already reported
 	}
 }
 
@@ -717,7 +954,31 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 		f.OnMessage(processedResponse)
 	}
 
+	// Seed lastLtp from snapshot so the first lite tick with the same value does not emit again (avoid duplicate response).
+	if dataType == "scrips" {
+		if ltp, ok := f.resp[topicName]["ltp"].(int32); ok {
+			f.lastLtpScrips[topicName] = ltp
+		}
+	} else if dataType == "index" {
+		if ltp, ok := f.resp[topicName]["ltp"].(int32); ok {
+			f.lastLtpIndex[topicName] = ltp
+		}
+	}
+
 	return offset
+}
+
+// fullModeTickRelevantScrips: only emit OnMessage when one of these fields changes (avoids spam from exch_feed_time / last_traded_time).
+var fullModeTickRelevantScrips = map[string]bool{
+	"ltp": true, "vol_traded_today": true, "bid_size": true, "ask_size": true,
+	"bid_price": true, "ask_price": true, "last_traded_qty": true, "avg_trade_price": true,
+	"low_price": true, "high_price": true, "open_price": true, "prev_close_price": true,
+	"OI": true, "lower_ckt": true, "upper_ckt": true,
+}
+
+// fullModeTickRelevantIndex: only emit when one of these index fields changes.
+var fullModeTickRelevantIndex = map[string]bool{
+	"ltp": true, "prev_close_price": true, "high_price": true, "low_price": true, "open_price": true,
 }
 
 // handleFullModeData handles full mode data feed
@@ -754,11 +1015,15 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 				if existingValue, hasValue := f.resp[topicName][fieldName]; hasValue {
 					if existingValue != value && value != -2147483648 {
 						f.resp[topicName][fieldName] = value
-						f.updateTick = true
+						if fullModeTickRelevantScrips[fieldName] {
+							f.updateTick = true
+						}
 					}
 				} else if value != -2147483648 {
 					f.resp[topicName][fieldName] = value
-					f.updateTick = true
+					if fullModeTickRelevantScrips[fieldName] {
+						f.updateTick = true
+					}
 				}
 			}
 			sfFlag = true
@@ -768,11 +1033,15 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 				if existingValue, hasValue := f.resp[topicName][fieldName]; hasValue {
 					if existingValue != value && value != -2147483648 {
 						f.resp[topicName][fieldName] = value
-						f.updateTick = true
+						if fullModeTickRelevantIndex[fieldName] {
+							f.updateTick = true
+						}
 					}
 				} else if value != -2147483648 {
 					f.resp[topicName][fieldName] = value
-					f.updateTick = true
+					if fullModeTickRelevantIndex[fieldName] {
+						f.updateTick = true
+					}
 				}
 			}
 			idxFlag = true
@@ -840,6 +1109,36 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 	return offset
 }
 
+// FloatSDK is a float64 that marshals to JSON as "x.0" when whole (to match Python SDK output).
+type FloatSDK float64
+
+func (f FloatSDK) MarshalJSON() ([]byte, error) {
+	v := float64(f)
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return json.Marshal(v)
+	}
+	if v == math.Trunc(v) {
+		return []byte(fmt.Sprintf("%.1f", v)), nil
+	}
+	return json.Marshal(v)
+}
+
+// asFloat64 returns the numeric value as float64 whether it was stored as int, float64, or FloatSDK.
+func asFloat64(v interface{}) (float64, bool) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case float64:
+		return n, true
+	case FloatSDK:
+		return float64(n), true
+	default:
+		return 0, false
+	}
+}
+
 // applyPrecisionAndMultiplier applies precision and multiplier calculations
 func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interface{}, dataType string) map[string]interface{} {
 	precision, precisionOk := response["precision"].(uint8)
@@ -859,15 +1158,26 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 	if f.lite {
 		if ltp, exists := response["ltp"]; exists {
 			if intValue, ok := ltp.(int32); ok {
-				newResponse["ltp"] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+				newResponse["ltp"] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 			}
 		}
+		// Symbol with exchange prefix to match Python (e.g. MCX:SILVER26MARFUT)
 		if symbol, exists := response["symbol"]; exists {
-			newResponse["symbol"] = symbol
+			symbolStr, _ := symbol.(string)
+			if symbolStr != "" && !strings.Contains(symbolStr, ":") {
+				if exchange, hasExchange := response["exchange"]; hasExchange {
+					if exStr, ok := exchange.(string); ok && exStr != "" {
+						symbolStr = exStr + ":" + symbolStr
+					} else {
+						symbolStr = "NSE:" + symbolStr
+					}
+				} else {
+					symbolStr = "NSE:" + symbolStr
+				}
+			}
+			newResponse["symbol"] = symbolStr
 		}
-		if responseType, exists := response["type"]; exists {
-			newResponse["type"] = responseType
-		}
+		newResponse["type"] = "sf"
 	} else {
 		switch dataType {
 		case "scrips":
@@ -884,7 +1194,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 								}
 							}
 							if needsPrecision && fieldName != "upper_ckt" && fieldName != "lower_ckt" {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}
@@ -907,12 +1217,12 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 				}
 				newResponse["symbol"] = symbolStr
 			}
-			if ltp, ltpOk := newResponse["ltp"].(float64); ltpOk {
-				if prevClose, prevCloseOk := newResponse["prev_close_price"].(float64); prevCloseOk && prevClose != 0 {
+			if ltp, ltpOk := asFloat64(newResponse["ltp"]); ltpOk {
+				if prevClose, prevCloseOk := asFloat64(newResponse["prev_close_price"]); prevCloseOk && prevClose != 0 {
 					change := ltp - prevClose
 					changePercent := (change / prevClose) * 100
-					newResponse["ch"] = math.Round(change*10000) / 10000
-					newResponse["chp"] = math.Round(changePercent*10000) / 10000
+					newResponse["ch"] = FloatSDK(math.Round(change*10000) / 10000)
+					newResponse["chp"] = FloatSDK(math.Round(changePercent*10000) / 10000)
 				}
 			}
 		case "index":
@@ -929,7 +1239,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 								}
 							}
 							if needsPrecision {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}
@@ -940,12 +1250,12 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 				}
 			}
 			newResponse["type"] = "if"
-			if ltp, ltpOk := newResponse["ltp"].(float64); ltpOk {
-				if prevClose, prevCloseOk := newResponse["prev_close_price"].(float64); prevCloseOk && prevClose != 0 {
+			if ltp, ltpOk := asFloat64(newResponse["ltp"]); ltpOk {
+				if prevClose, prevCloseOk := asFloat64(newResponse["prev_close_price"]); prevCloseOk && prevClose != 0 {
 					change := ltp - prevClose
 					changePercent := (change / prevClose) * 100
-					newResponse["ch"] = math.Round(change*100) / 100
-					newResponse["chp"] = math.Round(changePercent*100) / 100
+					newResponse["ch"] = FloatSDK(math.Round(change*100) / 100)
+					newResponse["chp"] = FloatSDK(math.Round(changePercent*100) / 100)
 				}
 			}
 		case "depth":
@@ -955,7 +1265,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 					if value, exists := response[fieldName]; exists {
 						if intValue, ok := value.(int32); ok {
 							if i < 10 {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}
@@ -1174,20 +1484,62 @@ func (f *FyersDataSocket) createUnsubscriptionMessage(symbols map[string]string)
 	return buffer
 }
 
-// Subscribe subscribes to symbols
+// slicesEqual returns true if a and b have the same length and elements in the same order.
+func slicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// Subscribe subscribes to symbols. Uses cached HSM mapping on reconnect when the symbol-token API fails (e.g. unexpected EOF) so subscription still succeeds.
 func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 	f.dataType = dataType
 
-	// Convert symbols to HSM tokens
+	// Convert symbols to HSM tokens (may fail on reconnect if API is flaky)
 	sc := newSymbolConversion(f.accessToken, dataType, f.logPath)
 	dataDict, wrongSymbols, dpIndexFlag, errorMsg := sc.symbolToHSMToken(symbols)
 
-	if errorMsg != "" {
+	if errorMsg != "" || dataDict == nil {
+		// API failed (e.g. unexpected EOF right after reconnect). Use cache if we have one for same symbols+dataType.
+		f.mu.Lock()
+		cached := f.cachedSubscribeDataDict != nil && f.cachedSubscribeDataType == dataType && slicesEqual(f.cachedSubscribeSymbols, symbols)
+		dataDictToUse := f.cachedSubscribeDataDict
+		f.mu.Unlock()
+		if cached && dataDictToUse != nil {
+			f.mu.Lock()
+			for hsm, userSym := range dataDictToUse {
+				f.symbolDict[hsm] = userSym
+			}
+			f.mu.Unlock()
+			msg := f.createSubscriptionMessage(dataDictToUse)
+			f.messageQueue <- msg
+			return
+		}
 		if f.OnError != nil {
 			f.OnError(map[string]interface{}{"error": errorMsg})
 		}
 		return
 	}
+
+	// API succeeded: update cache and symbolDict (topic -> user symbol, like Python symbol_token)
+	f.mu.Lock()
+	f.cachedSubscribeSymbols = make([]string, len(symbols))
+	copy(f.cachedSubscribeSymbols, symbols)
+	f.cachedSubscribeDataType = dataType
+	f.cachedSubscribeDataDict = make(map[string]string, len(dataDict))
+	for k, v := range dataDict {
+		f.cachedSubscribeDataDict[k] = v
+	}
+	for hsm, userSym := range dataDict {
+		f.symbolDict[hsm] = userSym
+	}
+	f.mu.Unlock()
 
 	if len(wrongSymbols) > 0 {
 		if f.OnError != nil {
@@ -1240,21 +1592,26 @@ func (f *FyersDataSocket) KeepRunning() {
 	}
 }
 
-// CloseConnection closes the WebSocket connection
+// CloseConnection closes the WebSocket connection. Sets restartFlag false first so reconnect is not triggered (same as Python close_connection).
 func (f *FyersDataSocket) CloseConnection() {
+	// fmt.Printf("[FyersDataSocket RECONNECT] CloseConnection: setting restartFlag=false and closing socket\n")
 	f.mu.Lock()
-	defer f.mu.Unlock()
-
+	f.restartFlag = false
 	if f.wsRun != nil {
 		f.wsRun.Close()
 		f.wsRun = nil
 	}
-
 	f.connected = false
-	close(f.stopChan)
+	f.mu.Unlock()
+
+	f.stopOnce.Do(func() { close(f.stopChan) })
 
 	if f.OnClose != nil {
-		f.OnClose(map[string]interface{}{"message": CONNECTION_CLOSED})
+		f.OnClose(map[string]interface{}{
+			"code":    SUCCESS_CODE,
+			"message": CONNECTION_CLOSED,
+			"s":       SUCCESS,
+		})
 	}
 }
 
@@ -1344,17 +1701,20 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 			value := int32(binary.BigEndian.Uint32(data[offset : offset+4]))
 			offset += 4
 
-			// Compare with existing LTP value (first field in data_val)
-			if len(fieldMappings["data_val"]) > 0 {
-				fieldName := fieldMappings["data_val"][0] // LTP is the first field
-				if existingValue, hasValue := f.resp[topicName][fieldName]; hasValue {
-					if existingValue != value && value != -2147483648 {
-						f.resp[topicName][fieldName] = value
-						f.resp[topicName]["type"] = "sf"
-						processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "scrips")
-						if f.OnMessage != nil {
-							f.OnMessage(processedResponse)
-						}
+			// Dedup: emit only when LTP actually changed (same as Python: value != self.resp[...][data_val[0]]).
+			if value != -2147483648 && len(fieldMappings["data_val"]) > 0 {
+				last := f.lastLtpScrips[topicName]
+				if last != value {
+					f.lastLtpScrips[topicName] = value
+					fieldName := fieldMappings["data_val"][0]
+					if f.resp[topicName] == nil {
+						f.resp[topicName] = make(map[string]interface{})
+					}
+					f.resp[topicName][fieldName] = value
+					f.resp[topicName]["type"] = "sf"
+					processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "scrips")
+					if f.OnMessage != nil {
+						f.OnMessage(processedResponse)
 					}
 				}
 			}
@@ -1364,17 +1724,20 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 			value := int32(binary.BigEndian.Uint32(data[offset : offset+4]))
 			offset += 4
 
-			// Compare with existing LTP value (first field in index_val)
-			if len(fieldMappings["index_val"]) > 0 {
-				fieldName := fieldMappings["index_val"][0] // LTP is the first field
-				if existingValue, hasValue := f.resp[topicName][fieldName]; hasValue {
-					if existingValue != value && value != -2147483648 {
-						f.resp[topicName][fieldName] = value
-						f.resp[topicName]["type"] = "if"
-						processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "index")
-						if f.OnMessage != nil {
-							f.OnMessage(processedResponse)
-						}
+			// Dedup: emit only when LTP actually changed (same as Python for index).
+			if value != -2147483648 && len(fieldMappings["index_val"]) > 0 {
+				last := f.lastLtpIndex[topicName]
+				if last != value {
+					f.lastLtpIndex[topicName] = value
+					fieldName := fieldMappings["index_val"][0]
+					if f.resp[topicName] == nil {
+						f.resp[topicName] = make(map[string]interface{})
+					}
+					f.resp[topicName][fieldName] = value
+					f.resp[topicName]["type"] = "if"
+					processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "index")
+					if f.OnMessage != nil {
+						f.OnMessage(processedResponse)
 					}
 				}
 			}

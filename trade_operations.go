@@ -6,141 +6,79 @@ import (
 	"net/http"
 )
 
-func (c *Client) ModifyOrder(fyClient *Client, orderRequest ModifyOrderRequest) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	requestBody, err := json.Marshal(orderRequest)
+func (m *FyersModel) ModifyOrder(orderRequest ModifyOrderRequest) (string, error) {
+	body, err := json.Marshal(orderRequest)
 	if err != nil {
-		return "", OrderResponse{}, fmt.Errorf("failed to marshal order request: %w", err)
+		return "", fmt.Errorf("marshal order request: %w", err)
 	}
-	response, err := c.httpClient.DoRaw(http.MethodPatch, SingleOrderActionURL, requestBody, headers)
+	resp, err := m.httpClient.DoRaw(http.MethodPatch, SingleOrderActionURL, body, m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderBook OrderResponse
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) ModifyMutliOrder(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultipleOrderActionURL, nil, headers)
+func (m *FyersModel) ModifyMutliOrder() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, MultipleOrderActionURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) CancelOrder(fyClient *Client) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, nil, headers)
+func (m *FyersModel) CancelOrder() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, OrderBookURL, []byte("{}"), m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderBook OrderResponse
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) CancelMutliOrder(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, nil, headers)
+func (m *FyersModel) CancelMutliOrder() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) ExitPosition(fyClient *Client) (string, OrderResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, PositionURL, nil, headers)
+func (m *FyersModel) ExitPosition() (string, error) {
+	body, _ := json.Marshal(map[string]int{"exit_all": 1})
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, PositionURL, body, m.authHeader())
 	if err != nil {
-		return "", OrderResponse{}, err
+		return "", err
 	}
-	var orderBook OrderResponse
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderResponse{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) ExitPositionById(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, PositionURL, nil, headers)
+func (m *FyersModel) ExitPositionById() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) ExitPositionByProductType(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, PositionURL, nil, headers)
+func (m *FyersModel) ExitPositionByProductType() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) CancelPendingOrders(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, PositionURL, nil, headers)
+func (m *FyersModel) CancelPendingOrders() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) ConvertPosition(fyClient *Client) (string, ModifyMutliOrderRequest, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodPost, PositionURL, nil, headers)
+func (m *FyersModel) ConvertPosition() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
 	if err != nil {
-		return "", ModifyMutliOrderRequest{}, err
+		return "", err
 	}
-	var orderBook ModifyMutliOrderRequest
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", ModifyMutliOrderRequest{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }

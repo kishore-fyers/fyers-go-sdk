@@ -1,96 +1,55 @@
 package fyersgosdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 )
 
-func (c *Client) GetHistory(fyClient *Client, historyRequest HistoryRequest) (string, HistoryResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	// url := fmt.Sprintf("%s%s", StockHistoryURL, url.Values{
-	// 	"symbol":      {historyRequest.Symbol},
-	// 	"resolution":  {historyRequest.Resolution},
-	// 	"date_format": {historyRequest.DateFormat},
-	// 	"range_from":  {historyRequest.RangeFrom},
-	// 	"range_to":    {historyRequest.RangeTo},
-	// 	"cont_flag":   {historyRequest.ContFlag},
-	// })
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	queryParams := url.Values{}
-	queryParams.Add("symbol", historyRequest.Symbol)
-	queryParams.Add("resolution", historyRequest.Resolution)
-	queryParams.Add("date_format", historyRequest.DateFormat)
-	queryParams.Add("range_from", historyRequest.RangeFrom)
-	queryParams.Add("range_to", historyRequest.RangeTo)
-	queryParams.Add("cont_flag", historyRequest.ContFlag)
-	response, err := c.httpClient.Do(http.MethodGet, StockHistoryURL, queryParams, headers)
+func (m *FyersModel) GetHistory(historyRequest HistoryRequest) (string, error) {
+	params := url.Values{}
+	params.Set("symbol", historyRequest.Symbol)
+	params.Set("resolution", historyRequest.Resolution)
+	params.Set("date_format", historyRequest.DateFormat)
+	params.Set("range_from", historyRequest.RangeFrom)
+	params.Set("range_to", historyRequest.RangeTo)
+	params.Set("cont_flag", historyRequest.ContFlag)
+	resp, err := m.httpClient.Do(http.MethodGet, StockHistoryURL, params, m.authHeader())
 	if err != nil {
-		return "", HistoryResponse{}, err
+		return "", err
 	}
-	var historyResponse HistoryResponse
-	if err := json.Unmarshal(response.Body, &historyResponse); err != nil {
-		return "", HistoryResponse{}, err
-	}
-	return string(response.Body), historyResponse, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetStockQuotes(fyClient *Client, symbol string) (string, StockQuotesResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	queryParams := url.Values{}
-	queryParams.Add("symbols", symbol)
-	response, err := c.httpClient.Do(http.MethodGet, StockQuotesURL, queryParams, headers)
+func (m *FyersModel) GetStockQuotes(symbol string) (string, error) {
+	params := url.Values{}
+	params.Set("symbols", symbol)
+	resp, err := m.httpClient.Do(http.MethodGet, StockQuotesURL, params, m.authHeader())
 	if err != nil {
-		return "", StockQuotesResponse{}, err
+		return "", err
 	}
-	var stockQuotesResponse StockQuotesResponse
-	if err := json.Unmarshal(response.Body, &stockQuotesResponse); err != nil {
-		return "", StockQuotesResponse{}, err
-	}
-	return string(response.Body), stockQuotesResponse, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetMarketDepth(fyClient *Client, marketDepthRequest MarketDepthRequest) (string, MarketDepthResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-
-	queryParams := url.Values{}
-	queryParams.Add("symbol", marketDepthRequest.Symbol)
-	queryParams.Add("ohlcv_flag", marketDepthRequest.OHLCV)
-
-	response, err := c.httpClient.Do(http.MethodGet, MarketDepthURL, queryParams, headers)
+func (m *FyersModel) GetMarketDepth(marketDepthRequest MarketDepthRequest) (string, error) {
+	params := url.Values{}
+	params.Set("symbol", marketDepthRequest.Symbol)
+	params.Set("ohlcv_flag", marketDepthRequest.OHLCV)
+	resp, err := m.httpClient.Do(http.MethodGet, MarketDepthURL, params, m.authHeader())
 	if err != nil {
-		return "", MarketDepthResponse{}, err
+		return "", err
 	}
-	var marketDepthResponse MarketDepthResponse
-	if err := json.Unmarshal(response.Body, &marketDepthResponse); err != nil {
-		return "", MarketDepthResponse{}, err
-	}
-	return string(response.Body), marketDepthResponse, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetOptionChain(fyClient *Client, optionChainRequest OptionChainRequest) (string, OptionChainResponse, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	queryParams := url.Values{}
-	queryParams.Add("symbol", optionChainRequest.Symbol)
-	queryParams.Add("strikecount", strconv.Itoa(optionChainRequest.StrikeCount))
-	queryParams.Add("timestamp", optionChainRequest.Timestamp)
-	response, err := c.httpClient.Do(http.MethodGet, OptionChainURl, queryParams, headers)
+func (m *FyersModel) GetOptionChain(optionChainRequest OptionChainRequest) (string, error) {
+	params := url.Values{}
+	params.Set("symbol", optionChainRequest.Symbol)
+	params.Set("strikecount", strconv.Itoa(optionChainRequest.StrikeCount))
+	params.Set("timestamp", optionChainRequest.Timestamp)
+	resp, err := m.httpClient.Do(http.MethodGet, OptionChainURl, params, m.authHeader())
 	if err != nil {
-		return "", OptionChainResponse{}, err
+		return "", err
 	}
-	var optionChainResponse OptionChainResponse
-	if err := json.Unmarshal(response.Body, &optionChainResponse); err != nil {
-		return "", OptionChainResponse{}, err
-	}
-	return string(response.Body), optionChainResponse, nil
+	return string(resp.Body), nil
 }

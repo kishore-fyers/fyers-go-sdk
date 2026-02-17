@@ -10,22 +10,29 @@ import (
 )
 
 // Data Socket Example
-func DataSocket(fyClient *Client, webSocketRequest DataSocketRequest) (map[string]interface{}, error) {
+func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[string]interface{}, error) {
 	// Replace with your actual access token
-	accessTokenStr := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
+	accessTokenStr := fmt.Sprintf("%s:%s", fyModel.appId, fyModel.accessToken)
 	// accessToken := "Z0G0WQQT6T-101:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCb1dpTC1kYlZrbXZGVmJwQk85RVBwWnpOMEdIVFBxY09zNXEwOTRjamZQd3RKSU9IMDJMd3pLdFF0ZDA5X2RIaHF1SUEtUUFvTWpXT1dldk1kVi03R0RRdjIzckxoYzRsbFh6c1hTeTg5Vzk5ZWNJbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiIyZDVjZGZiMmZmMzU5NDg2YWFmNGQyOTViZWM0YjIzMTFlYzVmZTU0NDc1Mjc5MGUzZGZiMmFhNSIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiTiIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzUwODExNDAwLCJpYXQiOjE3NTA3Mzc2NjIsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc1MDczNzY2Miwic3ViIjoiYWNjZXNzX3Rva2VuIn0.QLPwwLxeXNuYEgRldhIBGGeZ4IaXXr9ogYqmZFRGgh0"
 
+	var dataSocket *fyersws.FyersDataSocket
+	// onDataConnect is called on every connection (including after reconnect). Re-subscribe here so feed data resumes after reconnect.
+	onDataConnect := func() {
+		dataSocket.Subscribe(webSocketRequest.Symbols, webSocketRequest.DataType)
+	}
+
 	// Create a FyersDataSocket instance
-	dataSocket := fyersws.NewFyersDataSocket(
-		accessTokenStr, // Access token in the format "appid:accesstoken"
-		"",             // Log path - leave empty to auto-create logs in the current directory
-		false,          // Lite mode disabled. Set to true if you want a lite response
-		false,          // Save response in a log file instead of printing it
-		true,           // Enable auto-reconnection to WebSocket on disconnection
-		onDataConnect,  // Callback function to subscribe to data upon connection
-		onDataClose,    // Callback function to handle WebSocket connection close events
-		onDataError,    // Callback function to handle WebSocket errors
-		onDataMessage,  // Callback function to handle incoming messages from the WebSocket
+	dataSocket = fyersws.NewFyersDataSocket(
+		accessTokenStr,            // Access token in the format "appid:accesstoken"
+		"",                        // Log path - leave empty to auto-create logs in the current directory
+		webSocketRequest.LiteMode, // Lite mode disabled. Set to true if you want a lite response
+		false,                     // Save response in a log file instead of printing it
+		true,                      // Enable auto-reconnection to WebSocket on disconnection
+		50,                        // reconnectRetry: max reconnect attempts (same as Python default; cap 50)
+		onDataConnect,             // Callback: subscribe on every connect (first + after reconnect)
+		onDataClose,               // Callback function to handle WebSocket connection close events
+		onDataError,               // Callback function to handle WebSocket errors
+		onDataMessage,             // Callback function to handle incoming messages from the WebSocket
 	)
 
 	// Establish a connection to the Fyers Data WebSocket
@@ -33,12 +40,6 @@ func DataSocket(fyClient *Client, webSocketRequest DataSocketRequest) (map[strin
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Data Socket: %v", err)
 	}
-
-	// fmt.Println("Data Socket connected successfully!")
-
-	// Subscribe to symbols
-	// fmt.Printf("Subscribing to symbols: %v\n", webSocketRequest.Symbols)
-	dataSocket.Subscribe(webSocketRequest.Symbols, webSocketRequest.DataType)
 
 	// Set up signal handling to keep the connection alive
 	sigChan := make(chan os.Signal, 1)
@@ -63,7 +64,8 @@ func DataSocket(fyClient *Client, webSocketRequest DataSocketRequest) (map[strin
 
 // Data Socket callback functions
 func onDataMessage(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
+	// Marshal in data_val order (ltp, vol_traded_today, ..., type, symbol, ch, chp) to match Python SDK
+	jsonData, _ := fyersws.MarshalDataResponseInOrder(message)
 	fmt.Printf("Response: %s\n", string(jsonData))
 }
 
@@ -86,10 +88,6 @@ func onDataError(message map[string]interface{}) {
 
 func onDataClose(message map[string]interface{}) {
 	fmt.Printf("Connection closed: %v\n", message)
-}
-
-func onDataConnect() {
-	// fmt.Println("Data Socket - Connection established, subscribing to symbols...")
 }
 
 // Order Socket Example

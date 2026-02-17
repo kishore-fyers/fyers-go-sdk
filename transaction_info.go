@@ -1,103 +1,60 @@
 package fyersgosdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 )
 
-func (c *Client) GetOrderBook(fyClient *Client) (string, OrderBook, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, OrderBookURL, nil, headers)
+func (m *FyersModel) GetOrderBook() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodGet, OrderBookURL, nil, m.authHeader())
 	if err != nil {
-		return "", OrderBook{}, err
+		return "", err
 	}
-	var orderBook OrderBook
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderBook{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetOrderBookByTag(fyClient *Client, tag string) (string, OrderBook, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, OrdersByTagURL, nil, headers)
+func (m *FyersModel) GetOrderBookByTag(tag string) (string, error) {
+	params := url.Values{}
+	params.Set("order_tag", tag)
+	resp, err := m.httpClient.Do(http.MethodGet, OrdersByTagURL, params, m.authHeader())
 	if err != nil {
-		return "", OrderBook{}, err
+		return "", err
 	}
-	var orderBook OrderBook
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderBook{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetOrderById(fyClient *Client, id string) (string, OrderBook, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	queryParams := url.Values{}
-	queryParams.Add("id", id)
-
-	response, err := c.httpClient.Do(http.MethodGet, OrderByIdURL, queryParams, headers)
+func (m *FyersModel) GetOrderById(id string) (string, error) {
+	params := url.Values{}
+	params.Set("id", id)
+	resp, err := m.httpClient.Do(http.MethodGet, OrderByIdURL, params, m.authHeader())
 	if err != nil {
-		return "", OrderBook{}, err
+		return "", err
 	}
-	var orderBook OrderBook
-	if err := json.Unmarshal(response.Body, &orderBook); err != nil {
-		return "", OrderBook{}, err
-	}
-	return string(response.Body), orderBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetPositions(fyClient *Client) (string, Position, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, PositionURL, nil, headers)
+func (m *FyersModel) GetPositions() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodGet, PositionURL, nil, m.authHeader())
 	if err != nil {
-		return "", Position{}, err
+		return "", err
 	}
-	var orderCheckMargin Position
-	if err := json.Unmarshal(response.Body, &orderCheckMargin); err != nil {
-		return "", Position{}, err
-	}
-	return string(response.Body), orderCheckMargin, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetTradeBook(fyClient *Client) (string, TradeBook, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	response, err := c.httpClient.DoRaw(http.MethodGet, TradeBookURL, nil, headers)
+func (m *FyersModel) GetTradeBook() (string, error) {
+	resp, err := m.httpClient.DoRaw(http.MethodGet, TradeBookURL, nil, m.authHeader())
 	if err != nil {
-		return "", TradeBook{}, err
+		return "", err
 	}
-	var tradeBook TradeBook
-	if err := json.Unmarshal(response.Body, &tradeBook); err != nil {
-		return "", TradeBook{}, err
-	}
-	return string(response.Body), tradeBook, nil
+	return string(resp.Body), nil
 }
 
-func (c *Client) GetTradeBookByTag(fyClient *Client, tag string) (string, TradeBook, error) {
-	token := fmt.Sprintf("%s:%s", fyClient.appId, fyClient.accessToken)
-	headers := http.Header{}
-	headers.Add("Authorization", token)
-	queryParams := url.Values{}
-	queryParams.Add("order_tag", tag)
-	response, err := c.httpClient.Do(http.MethodGet, TradeBookByTagURL, queryParams, headers)
+func (m *FyersModel) GetTradeBookByTag(tag string) (string, error) {
+	params := url.Values{}
+	params.Set("order_tag", tag)
+	resp, err := m.httpClient.Do(http.MethodGet, TradeBookByTagURL, params, m.authHeader())
 	if err != nil {
-		return "", TradeBook{}, err
+		return "", err
 	}
-	var tradeBook TradeBook
-	if err := json.Unmarshal(response.Body, &tradeBook); err != nil {
-		return "", TradeBook{}, err
-	}
-	return string(response.Body), tradeBook, nil
+	return string(resp.Body), nil
 }
