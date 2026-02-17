@@ -275,9 +275,9 @@ type GTTOrderRequest struct {
 }
 
 type OrderInfo struct {
-	Leg1 Leg1 `json:"leg1"`
-	Leg2 Leg1 `json:"leg2"`
-	Leg3 Leg1 `json:"leg3"`
+	Leg1 Leg1  `json:"leg1"`
+	Leg2 *Leg1 `json:"leg2,omitempty"`
+	Leg3 *Leg1 `json:"leg3,omitempty"`
 }
 
 type Leg1 struct {
