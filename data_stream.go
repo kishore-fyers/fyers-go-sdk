@@ -17,15 +17,15 @@ func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[st
 
 	// Create a FyersDataSocket instance
 	dataSocket := fyersws.NewFyersDataSocket(
-		accessTokenStr,        // Access token in the format "appid:accesstoken"
-		"",                    // Log path - leave empty to auto-create logs in the current directory
-		webSocketRequest.Mode, // Lite mode disabled. Set to true if you want a lite response
-		false,                 // Save response in a log file instead of printing it
-		true,                  // Enable auto-reconnection to WebSocket on disconnection
-		onDataConnect,         // Callback function to subscribe to data upon connection
-		onDataClose,           // Callback function to handle WebSocket connection close events
-		onDataError,           // Callback function to handle WebSocket errors
-		onDataMessage,         // Callback function to handle incoming messages from the WebSocket
+		accessTokenStr,            // Access token in the format "appid:accesstoken"
+		"",                        // Log path - leave empty to auto-create logs in the current directory
+		webSocketRequest.LiteMode, // Lite mode disabled. Set to true if you want a lite response
+		false,                     // Save response in a log file instead of printing it
+		true,                      // Enable auto-reconnection to WebSocket on disconnection
+		onDataConnect,             // Callback function to subscribe to data upon connection
+		onDataClose,               // Callback function to handle WebSocket connection close events
+		onDataError,               // Callback function to handle WebSocket errors
+		onDataMessage,             // Callback function to handle incoming messages from the WebSocket
 	)
 
 	// Establish a connection to the Fyers Data WebSocket
@@ -63,7 +63,8 @@ func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[st
 
 // Data Socket callback functions
 func onDataMessage(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
+	// Marshal in data_val order (ltp, vol_traded_today, ..., type, symbol, ch, chp) to match Python SDK
+	jsonData, _ := fyersws.MarshalDataResponseInOrder(message)
 	fmt.Printf("Response: %s\n", string(jsonData))
 }
 

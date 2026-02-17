@@ -546,7 +546,7 @@ type OptionsChainItem struct {
 type DataSocketRequest struct {
 	Symbols  []string
 	DataType string
-	Mode     bool
+	LiteMode bool
 }
 
 type OrderSocketRequest struct {

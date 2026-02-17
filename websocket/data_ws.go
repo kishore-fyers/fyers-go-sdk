@@ -154,6 +154,91 @@ func loadFieldMappingsOnce() (map[string][]string, error) {
 	return fieldMappings, nil
 }
 
+var (
+	marshalMappings     map[string][]string
+	marshalMappingsOnce sync.Once
+)
+
+func getMappingsForMarshal() map[string][]string {
+	marshalMappingsOnce.Do(func() {
+		marshalMappings, _ = loadFieldMappingsOnce()
+	})
+	return marshalMappings
+}
+
+// buildOrderedKeys returns keys in data_val / index_val / depth order, then ch/chp, then any remainder.
+func buildOrderedKeys(resp map[string]interface{}, mappings map[string][]string) []string {
+	if mappings == nil {
+		// fallback: return keys in map iteration order (undefined)
+		keys := make([]string, 0, len(resp))
+		for k := range resp {
+			keys = append(keys, k)
+		}
+		return keys
+	}
+	seen := make(map[string]bool)
+	ordered := make([]string, 0, len(resp))
+
+	dataType, _ := resp["type"].(string)
+	var fieldOrder []string
+	switch dataType {
+	case "sf":
+		fieldOrder = mappings["data_val"]
+	case "if":
+		fieldOrder = mappings["index_val"]
+	case "dp":
+		fieldOrder = mappings["depthvalue"]
+	}
+
+	for _, key := range fieldOrder {
+		if _, exists := resp[key]; exists {
+			ordered = append(ordered, key)
+			seen[key] = true
+		}
+	}
+	for _, key := range []string{"ch", "chp"} {
+		if _, exists := resp[key]; exists && !seen[key] {
+			ordered = append(ordered, key)
+			seen[key] = true
+		}
+	}
+	for key := range resp {
+		if !seen[key] {
+			ordered = append(ordered, key)
+		}
+	}
+	return ordered
+}
+
+// MarshalDataResponseInOrder marshals the data response map to JSON with keys in the same order
+// as the Fyers data_val / index_val / depth feed: ltp, vol_traded_today, ..., type, symbol, ch, chp.
+// Use this when you need output order to match the Python SDK or a fixed field order.
+func MarshalDataResponseInOrder(resp map[string]interface{}) ([]byte, error) {
+	if resp == nil {
+		return []byte("null"), nil
+	}
+	mappings := getMappingsForMarshal()
+	orderedKeys := buildOrderedKeys(resp, mappings)
+	var buf strings.Builder
+	buf.Grow(512)
+	buf.WriteByte('{')
+	for i, key := range orderedKeys {
+		if i > 0 {
+			buf.WriteByte(',')
+		}
+		keyBytes, _ := json.Marshal(key)
+		buf.Write(keyBytes)
+		buf.WriteByte(':')
+		valBytes, err := json.Marshal(resp[key])
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(valBytes)
+	}
+	buf.WriteByte('}')
+	return []byte(buf.String()), nil
+}
+
 // AccessTokenToHSMToken converts access token to HSM token by decoding JWT
 func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	// Check if access token is in the correct format
@@ -840,6 +925,36 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 	return offset
 }
 
+// FloatSDK is a float64 that marshals to JSON as "x.0" when whole (to match Python SDK output).
+type FloatSDK float64
+
+func (f FloatSDK) MarshalJSON() ([]byte, error) {
+	v := float64(f)
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return json.Marshal(v)
+	}
+	if v == math.Trunc(v) {
+		return []byte(fmt.Sprintf("%.1f", v)), nil
+	}
+	return json.Marshal(v)
+}
+
+// asFloat64 returns the numeric value as float64 whether it was stored as int, float64, or FloatSDK.
+func asFloat64(v interface{}) (float64, bool) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), true
+	case int32:
+		return float64(n), true
+	case float64:
+		return n, true
+	case FloatSDK:
+		return float64(n), true
+	default:
+		return 0, false
+	}
+}
+
 // applyPrecisionAndMultiplier applies precision and multiplier calculations
 func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interface{}, dataType string) map[string]interface{} {
 	precision, precisionOk := response["precision"].(uint8)
@@ -859,7 +974,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 	if f.lite {
 		if ltp, exists := response["ltp"]; exists {
 			if intValue, ok := ltp.(int32); ok {
-				newResponse["ltp"] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+				newResponse["ltp"] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 			}
 		}
 		if symbol, exists := response["symbol"]; exists {
@@ -884,7 +999,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 								}
 							}
 							if needsPrecision && fieldName != "upper_ckt" && fieldName != "lower_ckt" {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}
@@ -907,12 +1022,12 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 				}
 				newResponse["symbol"] = symbolStr
 			}
-			if ltp, ltpOk := newResponse["ltp"].(float64); ltpOk {
-				if prevClose, prevCloseOk := newResponse["prev_close_price"].(float64); prevCloseOk && prevClose != 0 {
+			if ltp, ltpOk := asFloat64(newResponse["ltp"]); ltpOk {
+				if prevClose, prevCloseOk := asFloat64(newResponse["prev_close_price"]); prevCloseOk && prevClose != 0 {
 					change := ltp - prevClose
 					changePercent := (change / prevClose) * 100
-					newResponse["ch"] = math.Round(change*10000) / 10000
-					newResponse["chp"] = math.Round(changePercent*10000) / 10000
+					newResponse["ch"] = FloatSDK(math.Round(change*10000) / 10000)
+					newResponse["chp"] = FloatSDK(math.Round(changePercent*10000) / 10000)
 				}
 			}
 		case "index":
@@ -929,7 +1044,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 								}
 							}
 							if needsPrecision {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}
@@ -940,12 +1055,12 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 				}
 			}
 			newResponse["type"] = "if"
-			if ltp, ltpOk := newResponse["ltp"].(float64); ltpOk {
-				if prevClose, prevCloseOk := newResponse["prev_close_price"].(float64); prevCloseOk && prevClose != 0 {
+			if ltp, ltpOk := asFloat64(newResponse["ltp"]); ltpOk {
+				if prevClose, prevCloseOk := asFloat64(newResponse["prev_close_price"]); prevCloseOk && prevClose != 0 {
 					change := ltp - prevClose
 					changePercent := (change / prevClose) * 100
-					newResponse["ch"] = math.Round(change*100) / 100
-					newResponse["chp"] = math.Round(changePercent*100) / 100
+					newResponse["ch"] = FloatSDK(math.Round(change*100) / 100)
+					newResponse["chp"] = FloatSDK(math.Round(changePercent*100) / 100)
 				}
 			}
 		case "depth":
@@ -955,7 +1070,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 					if value, exists := response[fieldName]; exists {
 						if intValue, ok := value.(int32); ok {
 							if i < 10 {
-								newResponse[fieldName] = float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier))
+								newResponse[fieldName] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 							} else {
 								newResponse[fieldName] = value
 							}

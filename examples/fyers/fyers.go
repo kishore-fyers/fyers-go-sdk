@@ -383,16 +383,16 @@ func main() {
 
 	// WEBSOCKET EXAMPLES (these may still use fyClient if the SDK expects Client for websocket auth)
 	// Data Socket (Market Data WebSocket)
-	// wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
-	// 	Symbols:  []string{"MCX:SILVER26MARFUT"},
-	// 	DataType: "SymbolUpdate",
-	// 	Mode:     false,
-	// })
-	// if wsErr != nil {
-	// 	fmt.Printf("Data Socket Error: %v\n", wsErr)
-	// } else {
-	// 	fmt.Printf("Data Socket Response: %+v\n", wsResponse)
-	// }
+	wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
+		Symbols:  []string{"MCX:SILVER26MARFUT"},
+		DataType: "SymbolUpdate",
+		LiteMode: false,
+	})
+	if wsErr != nil {
+		fmt.Printf("Data Socket Error: %v\n", wsErr)
+	} else {
+		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+	}
 
 	// Order Socket (Order Updates WebSocket)
 	// wsResponse2, wsErr := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{
