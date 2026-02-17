@@ -7,50 +7,61 @@ import (
 )
 
 const (
-	clientId    string = ""
-	authToken   string = ""
-	accessToken string = ""
-	appId       string = "Z0G0WQQT6T-101"
-	appSecret   string = ""
-	redirectUrl string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
+	clientId     string = ""
+	authToken    string = ""
+	accessToken  string = ""
+	appId        string = "Z0G0WQQT6T-101"
+	appSecret    string = "TJHJFWBP0Q"
+	redirectUrl  string = "https://trade.fyers.in/api-login/redirect-uri/index.html"
+	refreshToken string = ""
+	pin          string = "1223"
 )
 
 func main() {
 	// Client is used only for GetLoginURL and GenerateAccessToken
-	// fyClient := fyersgosdk.SetClientData(clientId, appId, appSecret, redirectUrl)
-	// fmt.Println(fyClient.GetLoginURL())
+	fyClient := fyersgosdk.SetClientData(clientId, appId, appSecret, redirectUrl, pin)
+	fmt.Println(fyClient.GetLoginURL())
 
 	// Get access token (use auth code from login redirect)
-	// _, tokenResp, err := fyClient.GenerateAccessToken(authToken, fyClient)
-	// if err != nil { ... }
-	// accessToken := tokenResp.AccessToken
+	response, err := fyClient.GenerateAccessToken(authToken, fyClient)
+	if err != nil {
+		fmt.Printf("Error generating access token: %v\n", err)
+	}
+	fmt.Println("access token:", response)
+
+	fyClient.SetRefreshToken(refreshToken)
+	response, err = fyClient.GenerateAccessTokenFromRefreshToken(fyClient)
+	if err != nil {
+		fmt.Printf("Error generating access token from refresh token: %v\n", err)
+	}
+	fmt.Println("access token from refresh token:", response)
 
 	// FyersModel is used for all API calls (profile, funds, orders, etc.)
-	fyModel := fyersgosdk.NewFyersModel(clientId, accessToken)
+	// fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 
 	// Get profile (returns raw JSON string)
-	response, err := fyModel.GetProfile()
-	if err != nil {
-		fmt.Printf("Error getting profile: %v\n", err)
-		return
-	}
-	fmt.Println("profile:", response)
+	// response, err := fyModel.GetProfile()
+	// if err != nil {
+	// 	fmt.Printf("Error getting profile: %v\n", err)
+	// 	return
+	// }
+	// fmt.Println("profile:", response)
 
-	// Get funds
-	response, err = fyModel.GetFunds()
-	if err != nil {
-		fmt.Printf("Error getting funds: %v\n", err)
-		return
-	}
-	fmt.Println("funds:", response)
+	// // Get funds
+	// response, err = fyModel.GetFunds()
+	// if err != nil {
+	// 	fmt.Printf("Error getting funds: %v\n", err)
+	// 	return
+	// }
+	// fmt.Println("funds:", response)
 
-	// Get holdings (returns raw JSON string)
-	holdingsResp, err := fyModel.GetHoldings()
-	if err != nil {
-		fmt.Printf("Error getting holdings: %v\n", err)
-		return
-	}
-	fmt.Println("holdings:", holdingsResp)
+	// // Get holdings (returns raw JSON string)
+	// holdingsResp, err := fyModel.GetHoldings()
+	// if err != nil {
+	// 	fmt.Printf("Error getting holdings: %v\n", err)
+	// 	return
+	// }
+	// fmt.Println("holdings:", holdingsResp)
 
 	// Logout
 	// response, err := fyModel.Logout()
@@ -372,16 +383,16 @@ func main() {
 
 	// WEBSOCKET EXAMPLES (these may still use fyClient if the SDK expects Client for websocket auth)
 	// Data Socket (Market Data WebSocket)
-	wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
-		Symbols:  []string{"NSE:SBIN-EQ"},
-		DataType: "SymbolUpdate",
-		Mode:     true,
-	})
-	if wsErr != nil {
-		fmt.Printf("Data Socket Error: %v\n", wsErr)
-	} else {
-		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
-	}
+	// wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
+	// 	Symbols:  []string{"MCX:SILVER26MARFUT"},
+	// 	DataType: "SymbolUpdate",
+	// 	Mode:     false,
+	// })
+	// if wsErr != nil {
+	// 	fmt.Printf("Data Socket Error: %v\n", wsErr)
+	// } else {
+	// 	fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+	// }
 
 	// Order Socket (Order Updates WebSocket)
 	// wsResponse2, wsErr := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{

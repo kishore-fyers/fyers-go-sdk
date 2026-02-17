@@ -13,6 +13,7 @@ type Client struct {
 	appSecret    string
 	redirectUrl  string
 	refreshToken string
+	pin          string
 	retryCount   int //1-5
 
 	httpClient HTTPClient
@@ -21,9 +22,9 @@ type Client struct {
 // FyersModel is the API client for profile, orders, positions, data, and alerts.
 // Use Client only for GetLoginURL and GenerateAccessToken; use FyersModel for all other API calls.
 type FyersModel struct {
-	appId   string
+	appId       string
 	accessToken string
-	httpClient HTTPClient
+	httpClient  HTTPClient
 }
 
 type ClientOptions struct {

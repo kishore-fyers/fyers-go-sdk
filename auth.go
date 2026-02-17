@@ -2,17 +2,17 @@ package fyersgosdk
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-func SetClientData(clientId, appId, appSecret, redirectUrl string) *Client {
+func SetClientData(clientId, appId, appSecret, redirectUrl, pin string) *Client {
 	client := &Client{
 		clientId:    clientId,
 		appId:       appId,
 		appSecret:   appSecret,
 		redirectUrl: redirectUrl,
+		pin:         pin,
 		httpClient:  NewHTTPClient(nil, nil, false),
 	}
 
@@ -46,9 +46,9 @@ func (c *Client) GetLoginURL() string {
 // Use this for all API calls after obtaining the access token via Client.GenerateAccessToken.
 func NewFyersModel(appId, accessToken string) *FyersModel {
 	return &FyersModel{
-		appId:   appId,
-		accessToken:      accessToken,
-		httpClient: NewHTTPClient(nil, nil, false),
+		appId:       appId,
+		accessToken: accessToken,
+		httpClient:  NewHTTPClient(nil, nil, false),
 	}
 }
 
@@ -58,7 +58,7 @@ func (m *FyersModel) authHeader() http.Header {
 	return h
 }
 
-func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string, AccessTokenResponse, error) {
+func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string, error) {
 	// Get SHA256 checksum
 	h := sha256.New()
 	h.Write([]byte(fyClient.appId + ":" + fyClient.appSecret))
@@ -68,14 +68,24 @@ func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string
 
 	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateAuthCodeURL, []byte(requestBody), nil)
 	if err != nil {
-		return "", AccessTokenResponse{}, err
+		return "", err
 	}
 
-	// Parse the response
-	var resp AccessTokenResponse
-	if err := json.Unmarshal(response.Body, &resp); err != nil {
-		return "", AccessTokenResponse{}, err
+	return string(response.Body), nil
+}
+
+func (c *Client) GenerateAccessTokenFromRefreshToken(fyClient *Client) (string, error) {
+	// Get SHA256 checksum
+	h := sha256.New()
+	h.Write([]byte(fyClient.appId + ":" + fyClient.appSecret))
+
+	// Create JSON request body
+	requestBody := fmt.Sprintf(`{"refresh_token":"%s","appIdHash":"%s","grant_type":"refresh_token","pin":"%s"}`, fyClient.refreshToken, fmt.Sprintf("%x", h.Sum(nil)), fyClient.pin)
+
+	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateAuthCodeURL, []byte(requestBody), nil)
+	if err != nil {
+		return "", err
 	}
 
-	return string(response.Body), resp, nil
+	return string(response.Body), nil
 }

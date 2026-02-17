@@ -17,15 +17,15 @@ func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[st
 
 	// Create a FyersDataSocket instance
 	dataSocket := fyersws.NewFyersDataSocket(
-		accessTokenStr, // Access token in the format "appid:accesstoken"
-		"",             // Log path - leave empty to auto-create logs in the current directory
-		webSocketRequest.Mode,          // Lite mode disabled. Set to true if you want a lite response
-		false,          // Save response in a log file instead of printing it
-		true,           // Enable auto-reconnection to WebSocket on disconnection
-		onDataConnect,  // Callback function to subscribe to data upon connection
-		onDataClose,    // Callback function to handle WebSocket connection close events
-		onDataError,    // Callback function to handle WebSocket errors
-		onDataMessage,  // Callback function to handle incoming messages from the WebSocket
+		accessTokenStr,        // Access token in the format "appid:accesstoken"
+		"",                    // Log path - leave empty to auto-create logs in the current directory
+		webSocketRequest.Mode, // Lite mode disabled. Set to true if you want a lite response
+		false,                 // Save response in a log file instead of printing it
+		true,                  // Enable auto-reconnection to WebSocket on disconnection
+		onDataConnect,         // Callback function to subscribe to data upon connection
+		onDataClose,           // Callback function to handle WebSocket connection close events
+		onDataError,           // Callback function to handle WebSocket errors
+		onDataMessage,         // Callback function to handle incoming messages from the WebSocket
 	)
 
 	// Establish a connection to the Fyers Data WebSocket
