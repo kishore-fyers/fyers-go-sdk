@@ -1,9 +1,11 @@
 package fyersgosdk
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 func (m *FyersModel) GetHistory(historyRequest HistoryRequest) (string, error) {
@@ -21,9 +23,13 @@ func (m *FyersModel) GetHistory(historyRequest HistoryRequest) (string, error) {
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) GetStockQuotes(symbol string) (string, error) {
-	params := url.Values{}
-	params.Set("symbols", symbol)
+// GetStockQuotes returns quotes for up to 50 symbols (e.g. NSE:SBIN-EQ).
+func (m *FyersModel) GetStockQuotes(symbols []string) (string, error) {
+	if len(symbols) == 0 {
+		return "", fmt.Errorf("at least one symbol required")
+	}
+
+	params := url.Values{"symbols": {strings.Join(symbols, ",")}}
 	resp, err := m.httpClient.Do(http.MethodGet, StockQuotesURL, params, m.authHeader())
 	if err != nil {
 		return "", err
@@ -31,10 +37,11 @@ func (m *FyersModel) GetStockQuotes(symbol string) (string, error) {
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) GetMarketDepth(marketDepthRequest MarketDepthRequest) (string, error) {
-	params := url.Values{}
-	params.Set("symbol", marketDepthRequest.Symbol)
-	params.Set("ohlcv_flag", marketDepthRequest.OHLCV)
+func (m *FyersModel) GetMarketDepth(req MarketDepthRequest) (string, error) {
+	params := url.Values{
+		"symbol":     {req.Symbol},
+		"ohlcv_flag": {req.OHLCV},
+	}
 	resp, err := m.httpClient.Do(http.MethodGet, MarketDepthURL, params, m.authHeader())
 	if err != nil {
 		return "", err
@@ -42,11 +49,12 @@ func (m *FyersModel) GetMarketDepth(marketDepthRequest MarketDepthRequest) (stri
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) GetOptionChain(optionChainRequest OptionChainRequest) (string, error) {
-	params := url.Values{}
-	params.Set("symbol", optionChainRequest.Symbol)
-	params.Set("strikecount", strconv.Itoa(optionChainRequest.StrikeCount))
-	params.Set("timestamp", optionChainRequest.Timestamp)
+func (m *FyersModel) GetOptionChain(req OptionChainRequest) (string, error) {
+	params := url.Values{
+		"symbol":      {req.Symbol},
+		"strikecount": {strconv.Itoa(req.StrikeCount)},
+		"timestamp":   {req.Timestamp},
+	}
 	resp, err := m.httpClient.Do(http.MethodGet, OptionChainURl, params, m.authHeader())
 	if err != nil {
 		return "", err

@@ -1,0 +1,376 @@
+[
+  {
+    "function": "SetClientDataAndGetLoginURL",
+    "input": {
+      "appId": "test-app",
+      "appSecret": "test-secret",
+      "redirectUrl": "https://example.com/callback"
+    },
+    "output": "https://api-t1.fyers.in/api/v3/generate-authcode?\u0026client_id=test-app\u0026redirect_uri=https://example.com/callback\u0026response_type=code\u0026state=sample_state"
+  },
+  {
+    "function": "GenerateAccessToken",
+    "input": {
+      "authToken": "invalid-code"
+    },
+    "output": "{\"code\":-437,\"message\":\"invalid auth code\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GenerateAccessTokenFromRefreshToken",
+    "input": {
+      "refreshToken": "invalid-refresh",
+      "pin": "0000"
+    },
+    "output": "{\"code\":-501,\"message\":\"Please provide valid refresh token\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetProfile",
+    "input": {},
+    "output": "{\"s\": \"ok\", \"code\": 200, \"message\": \"\", \"data\": {\"fy_id\": \"YK04391\", \"name\": \"KUMAR KISHORE KUMAR\", \"image\": null, \"display_name\": null, \"pin_change_date\": \"02-02-2026 15:46:04\", \"email_id\": \"kishore28kks@gmail.com\", \"pwd_change_date\": null, \"PAN\": \"LBGPK9804E\", \"mobile_number\": \"9566694252\", \"totp\": true, \"pwd_to_expire\": 90, \"ddpi_enabled\": true, \"mtf_enabled\": true}}"
+  },
+  {
+    "function": "GetFunds",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetHoldings",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "Logout",
+    "input": {},
+    "output": "{\"s\":\"error\",\"code\":-16,\"message\":\"Token is Invalid or Expired\"}"
+  },
+  {
+    "function": "GetOrderBook",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetOrderBookByTag",
+    "input": {
+      "tag": "1:Ordertag"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetOrderById",
+    "input": {
+      "id": "1"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetPositions",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetTradeBook",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetTradeBookByTag",
+    "input": {
+      "tag": "2:Exit"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "SingleOrderAction",
+    "input": {
+      "symbol": "NSE:SBIN-EQ",
+      "qty": 1,
+      "type": 1,
+      "side": 1,
+      "productType": "CNC",
+      "limitPrice": 100,
+      "stopPrice": 0,
+      "validity": "DAY",
+      "disclosedQty": 0,
+      "offlineOrder": false,
+      "stopLoss": 0,
+      "takeProfit": 0,
+      "orderTag": ""
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "MultiOrderAction",
+    "input": {
+      "orders": [
+        {
+          "symbol": "NSE:SBIN-EQ",
+          "qty": 1,
+          "type": 1,
+          "side": 1,
+          "productType": "CNC",
+          "validity": "DAY"
+        }
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ModifyOrder",
+    "input": {
+      "id": "1",
+      "qty": 10,
+      "type": 1,
+      "side": 1,
+      "limitPrice": 100
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ModifyMutliOrder",
+    "input": {
+      "requests": [
+        {
+          "id": 8102710298291,
+          "type": 1,
+          "limitPrice": 61049,
+          "qty": 1
+        },
+        {
+          "id": 8102710298292,
+          "type": 1,
+          "limitPrice": 61049,
+          "qty": 1
+        }
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "CancelOrder",
+    "input": {
+      "id": "23030900015105"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "CancelMutliOrder",
+    "input": {
+      "orderIds": [
+        "808058117761",
+        "808058117762"
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GTTSingleOrderAction",
+    "input": {
+      "side": 1,
+      "symbol": "NSE:SBIN-EQ",
+      "productType": "CNC",
+      "orderInfo": {
+        "leg1": {
+          "price": 100,
+          "triggerPrice": 100,
+          "qty": 1
+        }
+      }
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GTTMultiOrderAction",
+    "input": {
+      "orders": [
+        {
+          "side": 1,
+          "symbol": "NSE:SBIN-EQ",
+          "productType": "CNC",
+          "orderInfo": {
+            "leg1": {
+              "price": 10000,
+              "triggerPrice": 10000,
+              "qty": 3
+            },
+            "leg2": {
+              "price": 990,
+              "triggerPrice": 990,
+              "qty": 3
+            }
+          }
+        }
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ModifyGTTOrder",
+    "input": {
+      "requests": [
+        {
+          "id": "26021800001427",
+          "orderInfo": {
+            "leg1": {
+              "price": 1750,
+              "triggerPrice": 1749,
+              "qty": 5
+            },
+            "leg2": {
+              "price": 1700,
+              "triggerPrice": 1701,
+              "qty": 5
+            }
+          }
+        }
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "CancelGTTOrder",
+    "input": {
+      "orderId": "25111300002007"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetGTTOrderBook",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ExitPosition",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ExitPositionById",
+    "input": {
+      "orderIds": [
+        "NSE:IDEA-EQ-INTRADAY"
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ExitPositionByProductType",
+    "input": {
+      "segment": [
+        10
+      ],
+      "side": [
+        1,
+        -1
+      ],
+      "productType": [
+        "INTRADAY",
+        "CNC"
+      ]
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "CancelPendingOrders",
+    "input": {
+      "pending_orders_cancel": 1,
+      "id": ""
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ConvertPosition",
+    "input": {
+      "symbol": "MCX:SILVERMIC20NOVFUT-INTRADAY",
+      "positionSide": 1,
+      "convertQty": 1,
+      "convertFrom": "INTRADAY",
+      "convertTo": "CNC",
+      "overnight": 1
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetMarketStatus",
+    "input": {},
+    "output": "{\"message\":\"Please provide valid token\",\"code\":-15,\"s\":\"error\"}"
+  },
+  {
+    "function": "GetHistory",
+    "input": {
+      "symbol": "NSE:SBIN-EQ",
+      "resolution": "30",
+      "date_format": "1",
+      "range_from": "2021-01-01",
+      "range_to": "2021-01-02",
+      "cont_flag": ""
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "GetStockQuotes",
+    "input": {
+      "symbols": [
+        "NSE:SBIN-EQ",
+        "NSE:NIFTY50-INDEX"
+      ]
+    },
+    "output": "{\"message\":\"Please provide valid token\",\"code\":-15,\"s\":\"error\"}"
+  },
+  {
+    "function": "GetMarketDepth",
+    "input": {
+      "symbol": "NSE:SBIN-EQ",
+      "ohlcv_flag": "1"
+    },
+    "output": "{\"message\":\"Please provide valid token\",\"code\":-15,\"s\":\"error\"}"
+  },
+  {
+    "function": "GetOptionChain",
+    "input": {
+      "symbol": "NSE:SBIN-EQ",
+      "strikecount": 10,
+      "timestamp": ""
+    },
+    "output": "{\"message\":\"Please provide valid token\",\"code\":-15,\"s\":\"error\"}"
+  },
+  {
+    "function": "GetAlerts",
+    "input": {},
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "CreateAlert",
+    "input": {
+      "symbol": "NSE:SBIN-EQ",
+      "agent": "",
+      "alert-type": 0,
+      "comparisonType": "",
+      "condition": "",
+      "value": 0,
+      "name": ""
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "UpdateAlert",
+    "input": {
+      "alertId": "1",
+      "alertRequest": {}
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "DeleteAlert",
+    "input": {
+      "alertId": "1"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  },
+  {
+    "function": "ToggleAlert",
+    "input": {
+      "alertId": "1"
+    },
+    "output": "{\"code\":-16,\"message\":\"Could not authenticate the user\",\"s\":\"error\"}"
+  }
+]

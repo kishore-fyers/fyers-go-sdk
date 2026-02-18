@@ -52,75 +52,49 @@ import (
 )
 
 func main() {
-    // Initialize client with your credentials
-    client := fyersgosdk.SetClientData(
-        "YOUR_CLIENT_ID",
-        "YOUR_APP_ID", 
-        "YOUR_APP_SECRET",
-        "YOUR_REDIRECT_URL",
-    )
+    // 1. Initialize client (auth only)
+    fyClient := fyersgosdk.SetClientData("YOUR_APP_ID", "YOUR_APP_SECRET", "YOUR_REDIRECT_URL")
+    fmt.Println("Login URL:", fyClient.GetLoginURL())
 
-    // Generate login URL
-    loginURL := client.GetLoginURL()
-    fmt.Println("Login URL:", loginURL)
-
-    // After user authorization, get auth code and generate access token
+    // 2. After user authorizes, exchange auth code for access token
     authCode := "AUTH_CODE_FROM_REDIRECT"
-    response, accessTokenResp, err := client.GenerateAccessToken(authCode, client)
+    response, err := fyClient.GenerateAccessToken(authCode, fyClient)
     if err != nil {
         log.Fatal("Error generating access token:", err)
     }
+    // Parse response JSON to get access_token; then create model for API calls
 
-    // Set access token for subsequent API calls
-    client.SetAccessToken(accessTokenResp.AccessToken)
-
-    // Get user profile
-    _, profile, err := client.GetProfile(client)
+    // 3. Use FyersModel for all API calls (profile, orders, data, etc.)
+    fyModel := fyersgosdk.NewFyersModel("YOUR_APP_ID", "ACCESS_TOKEN")
+    profile, err := fyModel.GetProfile()
     if err != nil {
         log.Fatal("Error getting profile:", err)
     }
-
-    fmt.Printf("Welcome, %s!\n", profile.Name)
+    fmt.Println("Profile:", profile)
 }
 ```
 
 ### Get Market Data
 
 ```go
-// Get real-time quotes
-symbols := "NSE:NIFTY50-INDEX,NSE:BANKNIFTY-INDEX"
-_, quotes, err := client.GetQuotes(symbols)
-if err != nil {
-    log.Fatal("Error getting quotes:", err)
-}
-
-for _, quote := range quotes {
-    fmt.Printf("%s: %.2f\n", quote.Symbol, quote.Ltp)
-}
+fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// Quotes (up to 50 symbols)
+quotes, err := fyModel.GetStockQuotes([]string{"NSE:SBIN-EQ", "NSE:NIFTY50-INDEX"})
+// History
+history, err := fyModel.GetHistory(fyersgosdk.HistoryRequest{
+    Symbol: "NSE:SBIN-EQ", Resolution: "30", DateFormat: "1",
+    RangeFrom: "2021-01-01", RangeTo: "2021-01-02", ContFlag: "",
+})
 ```
 
 ### Place an Order
 
 ```go
-order := fyersgosdk.OrderRequest{
-    Symbol:        "NSE:RELIANCE-EQ",
-    Qty:           100,
-    Side:          1, // Buy
-    Type:          2, // Market
-    ProductType:   "INTRADAY",
-    Validity:      "DAY",
-    DisclosedQty:  0,
-    OfflineOrder:  "False",
-    StopLoss:      0,
-    TakeProfit:    0,
-}
-
-_, orderResp, err := client.PlaceOrder(order)
-if err != nil {
-    log.Fatal("Error placing order:", err)
-}
-
-fmt.Printf("Order placed successfully! Order ID: %s\n", orderResp.Id)
+fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+response, err := fyModel.SingleOrderAction(fyersgosdk.OrderRequest{
+    Symbol: "NSE:IDEA-EQ", Qty: 1, Type: 1, Side: 1, ProductType: "CNC",
+    LimitPrice: 100, Validity: "DAY", DisclosedQty: 0, OfflineOrder: false,
+})
 ```
 
 ## 🔐 Authentication
@@ -138,282 +112,250 @@ First, register your application on the [Fyers Developer Portal](https://myapi.f
 ### 2. Authentication Flow
 
 ```go
-// Step 1: Initialize client
-client := fyersgosdk.SetClientData(clientId, appId, appSecret, redirectUrl)
+// Step 1: Initialize client (appId, appSecret, redirectUrl)
+fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
 
 // Step 2: Generate login URL
-loginURL := client.GetLoginURL()
+loginURL := fyClient.GetLoginURL()
 fmt.Println("Please visit:", loginURL)
 
-// Step 3: User authorizes and you get auth code from redirect
-// Step 4: Exchange auth code for access token
-response, accessTokenResp, err := client.GenerateAccessToken(authCode, client)
-if err != nil {
-    log.Fatal(err)
-}
+// Step 3: User authorizes; you get auth code from redirect URL
+// Step 4: Exchange auth code for access token (returns JSON string)
+response, err := fyClient.GenerateAccessToken(authCode, fyClient)
 
-// Step 5: Use access token for API calls
-client.SetAccessToken(accessTokenResp.AccessToken)
-```
+// Step 5: Or refresh token with PIN
+response, err := fyClient.GenerateAccessTokenFromRefreshToken(refreshToken, pin, fyClient)
 
-### 3. Token Management
-
-```go
-// Set refresh token for automatic token renewal
-client.SetRefreshToken(accessTokenResp.RefreshToken)
-
-// The SDK automatically handles token refresh when needed
+// Step 6: Create FyersModel for all API calls
+fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 ```
 
 ## 📚 API Reference
 
-### User Operations
+All API methods return `(string, error)`; the string is the raw JSON response. Use **Client** only for auth; use **FyersModel** for everything after login.
 
-#### Get Profile
-```go
-_, profile, err := client.GetProfile(client)
-```
+### Authentication (Client)
 
-#### Get Funds
-```go
-_, funds, err := client.GetFunds(client)
-```
+| Method | Description |
+|--------|-------------|
+| `SetClientData(appId, appSecret, redirectUrl string) *Client` | Create client for login/refresh. |
+| `GetLoginURL() string` | URL for user to authorize and get auth code. |
+| `GenerateAccessToken(authToken string, fyClient *Client) (string, error)` | Exchange auth code for access token. |
+| `GenerateAccessTokenFromRefreshToken(refreshToken, pin string, fyClient *Client) (string, error)` | Get new access token from refresh token. |
+| `SetAccessToken(accessToken string) *Client` | Set token on client (optional). |
 
-#### Get Holdings
-```go
-_, holdings, err := client.GetHoldings(client)
-```
+### User & Profile (FyersModel)
 
-### Trading Operations
+| Method | Description |
+|--------|-------------|
+| `GetProfile() (string, error)` | User profile. |
+| `GetFunds() (string, error)` | Account funds. |
+| `GetHoldings() (string, error)` | Portfolio holdings. |
+| `Logout() (string, error)` | Logout session. |
 
-#### Place Order
-```go
-order := fyersgosdk.OrderRequest{
-    Symbol:      "NSE:RELIANCE-EQ",
-    Qty:         100,
-    Side:        1, // 1=Buy, 2=Sell
-    Type:        2, // 1=Limit, 2=Market, 3=Stop, 4=StopLimit
-    ProductType: "INTRADAY", // INTRADAY, CNC, MARGIN
-    Validity:    "DAY", // DAY, IOC, TTL
-}
+### Transaction Info (FyersModel)
 
-_, orderResp, err := client.PlaceOrder(order)
-```
+| Method | Description |
+|--------|-------------|
+| `GetOrderBook() (string, error)` | All orders. |
+| `GetOrderBookByTag(tag string) (string, error)` | Orders by tag. |
+| `GetOrderById(id string) (string, error)` | Single order by ID. |
+| `GetPositions() (string, error)` | Open positions. |
+| `GetTradeBook() (string, error)` | Trade book. |
+| `GetTradeBookByTag(tag string) (string, error)` | Trades by tag. |
 
-#### Modify Order
-```go
-modifyReq := fyersgosdk.ModifyOrderRequest{
-    Id:     "ORDER_ID",
-    Qty:    150,
-    Price:  2500.50,
-    Type:   1, // Limit order
-}
+### Orders (FyersModel)
 
-_, modifyResp, err := client.ModifyOrder(modifyReq)
-```
+| Method | Description |
+|--------|-------------|
+| `SingleOrderAction(orderRequest OrderRequest) (string, error)` | Place single order. |
+| `MultiOrderAction(orderRequests []OrderRequest) (string, error)` | Place multiple orders. |
+| `MultiLegOrderAction(orderRequests []MultiLegOrderRequest) (string, error)` | Place multi-leg orders. |
+| `ModifyOrder(orderRequest ModifyOrderRequest) (string, error)` | Modify single order (PATCH). |
+| `ModifyMutliOrder(requests []ModifyMultiOrderItem) (string, error)` | Modify multiple orders (PATCH). |
+| `CancelOrder(Id string) (string, error)` | Cancel single order. |
+| `CancelMutliOrder(orderIds []string) (string, error)` | Cancel multiple orders (DELETE). |
 
-#### Cancel Order
-```go
-_, cancelResp, err := client.CancelOrder("ORDER_ID")
-```
+### GTT Orders (FyersModel)
 
-### Market Data
+| Method | Description |
+|--------|-------------|
+| `GTTSingleOrderAction(orderRequest GTTOrderRequest) (string, error)` | Place GTT order. |
+| `GTTMultiOrderAction(orderRequests []GTTOrderRequest) (string, error)` | Place GTT (sends first only). |
+| `ModifyGTTOrder(orderRequests []ModifyGTTOrderRequest) (string, error)` | Modify GTT order. |
+| `CancelGTTOrder(orderId string) (string, error)` | Cancel GTT order. |
+| `GetGTTOrderBook() (string, error)` | GTT order book. |
 
-#### Get Quotes
-```go
-symbols := "NSE:NIFTY50-INDEX,NSE:BANKNIFTY-INDEX"
-_, quotes, err := client.GetQuotes(symbols)
-```
+### Trade Operations / Positions (FyersModel)
 
-#### Get Historical Data
-```go
-historyReq := fyersgosdk.HistoryRequest{
-    Symbol:     "NSE:NIFTY50-INDEX",
-    Resolution: "1D", // 1, 2, 3, 5, 10, 15, 20, 30, 60, 120, 1D, 1W, 1M
-    DateFormat: 1,
-    RangeFrom:  "2024-01-01",
-    RangeTo:    "2024-01-31",
-    ContFlag:   "1",
-}
+| Method | Description |
+|--------|-------------|
+| `ExitPosition() (string, error)` | Exit all positions (DELETE with exit_all). |
+| `ExitPositionById(orderId []string) (string, error)` | Exit by order IDs. |
+| `ExitPositionByProductType(req ExitPositionByProductTypeRequest) (string, error)` | Exit by segment/side/productType. |
+| `CancelPendingOrders(req CancelPendingOrdersRequest) (string, error)` | Cancel pending orders (optional Id for single symbol). |
+| `ConvertPosition(req ConvertPositionRequest) (string, error)` | Convert position (e.g. INTRADAY to CNC). |
 
-_, history, err := client.GetHistory(historyReq)
-```
+### Market Data (FyersModel)
 
-#### Get Market Depth
-```go
-_, depth, err := client.GetMarketDepth("NSE:RELIANCE-EQ")
-```
+| Method | Description |
+|--------|-------------|
+| `GetHistory(req HistoryRequest) (string, error)` | OHLCV history (symbol, resolution, range). |
+| `GetStockQuotes(symbols []string) (string, error)` | Quotes for up to 50 symbols. |
+| `GetMarketDepth(req MarketDepthRequest) (string, error)` | Market depth (symbol, ohlcv_flag). |
+| `GetOptionChain(req OptionChainRequest) (string, error)` | Options chain. |
 
-### Portfolio Management
+### Broker (FyersModel)
 
-#### Get Positions
-```go
-_, positions, err := client.GetPositions(client)
-```
+| Method | Description |
+|--------|-------------|
+| `GetMarketStatus() (string, error)` | Market status. |
 
-#### Get Trade Book
-```go
-_, trades, err := client.GetTradeBook(client)
-```
+### Alerts (FyersModel)
 
-#### Get Orders
-```go
-_, orders, err := client.GetOrders(client)
-```
+| Method | Description |
+|--------|-------------|
+| `GetAlerts() (string, error)` | List price alerts. |
+| `CreateAlert(req AlertRequest) (string, error)` | Create alert. |
+| `UpdateAlert(alertId string, req AlertRequest) (string, error)` | Update alert. |
+| `DeleteAlert(alertId string) (string, error)` | Delete alert. |
+| `ToggleAlert(alertId string) (string, error)` | Toggle alert. |
+
+### WebSocket (package-level)
+
+| Function | Description |
+|----------|-------------|
+| `DataSocket(fyModel *FyersModel, req DataSocketRequest) (map[string]interface{}, error)` | Real-time data stream (quotes, depth). |
+| `OrderSocket(fyClient *Client, req OrderSocketRequest) (map[string]interface{}, error)` | Real-time orders, trades, positions. |
 
 ## 🔌 WebSocket Streaming
 
-The SDK provides real-time data streaming capabilities:
-
-### General Stream (Orders, Trades, Positions)
+Use **DataSocket** for live market data (quotes, depth) and **OrderSocket** for orders, trades, and positions. Both run until interrupt (e.g. Ctrl+C).
 
 ```go
-// Initialize general stream
-stream := fyersgosdk.NewGeneralStream(client)
-
-// Subscribe to order updates
-stream.SubscribeOrders(func(order fyersgosdk.OrderUpdate) {
-    fmt.Printf("Order Update: %+v\n", order)
+// Data WebSocket (symbols, lite/full mode)
+fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+result, err := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
+    Symbols: []string{"NSE:SBIN-EQ"},
+    LiteMode: false,
+    DataType: "symbol",
 })
 
-// Subscribe to trade updates
-stream.SubscribeTrades(func(trade fyersgosdk.TradeUpdate) {
-    fmt.Printf("Trade Update: %+v\n", trade)
+// Order WebSocket (trades, positions, orders)
+fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
+fyClient.SetAccessToken(accessToken)
+result, err := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{
+    TradeOperations: []string{"OnOrders", "OnTrades", "OnPositions"},
 })
-
-// Subscribe to position updates
-stream.SubscribePositions(func(position fyersgosdk.PositionUpdate) {
-    fmt.Printf("Position Update: %+v\n", position)
-})
-
-// Connect to stream
-err := stream.Connect()
-if err != nil {
-    log.Fatal("Error connecting to stream:", err)
-}
-
-// Keep connection alive
-select {}
-```
-
-### Market Data Stream
-
-```go
-// Initialize market data stream
-marketStream := fyersgosdk.NewMarketDataStream(client)
-
-// Subscribe to symbol updates
-symbols := []string{"NSE:NIFTY50-INDEX", "NSE:BANKNIFTY-INDEX"}
-marketStream.SubscribeSymbols(symbols, func(quote fyersgosdk.QuoteUpdate) {
-    fmt.Printf("Quote Update: %s = %.2f\n", quote.Symbol, quote.Ltp)
-})
-
-// Connect to stream
-err := marketStream.Connect()
-if err != nil {
-    log.Fatal("Error connecting to market stream:", err)
-}
 ```
 
 ## 📁 Examples
 
-The SDK includes comprehensive examples in the `examples/` directory:
+All runnable examples live in **[examples/fyers/fyers.go](examples/fyers/fyers.go)**. Uncomment the `main()` you need and run from that directory. The file includes:
 
-### Basic Examples
-- [Authentication](examples/fyers/basic/fyers.go) - Basic authentication flow
-- [Profile Management](examples/user/profile/main.go) - Get user profile
-- [Funds Information](examples/user/funds/main.go) - Get account funds
-- [Holdings](examples/user/holdings/main.go) - Get portfolio holdings
+### Authentication
+- **Get Auth Code URL** – `SetClientData`, `GetLoginURL`
+- **Generate Access Token** – `GenerateAccessToken`
+- **Generate Access Token From Refresh Token** – `GenerateAccessTokenFromRefreshToken`
 
-### Trading Examples
-- [Basic Order Placement](examples/orders/basic/main.go) - Place simple orders
-- [Multi-Leg Orders](examples/orders/multileg/main.go) - Complex order types
-- [GTT Orders](examples/orders/gtt/single/main.go) - Good Till Triggered orders
-- [Order Modifications](examples/trading/modify/main.go) - Modify existing orders
+### User & Profile
+- **Get Profile** – `GetProfile`
+- **Get Funds** – `GetFunds`
+- **Get Holdings** – `GetHoldings`
+- **Logout** – `Logout`
 
-### Data Examples
-- [Historical Data](examples/data/history/main.go) - Get historical prices
-- [Real-time Quotes](examples/data/quotes/main.go) - Live market data
-- [Market Depth](examples/data/depth/main.go) - Order book data
-- [Options Chain](examples/data/options/main.go) - Options data
+### Transaction Info
+- **All Trades** – `GetTradeBook`
+- **Trade Book by Tag** – `GetTradeBookByTag`
+- **Get Order Book** – `GetOrderBook`
+- **Get Order Book by Tag** – `GetOrderBookByTag`
+- **Get Positions** – `GetPositions`
 
-### Streaming Examples
-- [Order Updates](examples/stream/general/orders/main.go) - Real-time order updates
-- [Trade Updates](examples/stream/general/trades/main.go) - Live trade information
-- [Market Data](examples/stream/marketdata/symbols/main.go) - Live quotes
+### Orders
+- **Single Order Placement** – `SingleOrderAction`
+- **Multi Order Placement** – `MultiOrderAction`
+- **MultiLeg Order** – `MultiLegOrderAction`
+- **Modify Orders** – `ModifyOrder`
+- **Modify Multi Orders** – `ModifyMutliOrder`
+- **Cancel Order** – `CancelOrder`
+- **Multi Cancel Order** – `CancelMutliOrder`
+
+### GTT
+- **GTT Single** – `GTTSingleOrderAction`
+- **GTT OCO** – `GTTMultiOrderAction`
+- **GTT Modify** – `ModifyGTTOrder`
+- **GTT Cancel / CancelGTT** – `CancelGTTOrder`
+- **GTT Get Order Book** – `GetGTTOrderBook`
+
+### Trade Operations / Positions
+- **Exit Order** – `ExitPosition`
+- **Exit Position By Id** – `ExitPositionById`
+- **Exit Position by Tag** – `ExitPositionByProductType`
+- **Pending Order Cancel** – `CancelPendingOrders`
+- **Convert Position** – `ConvertPosition`
+
+### Market Data & Broker
+- **Market Status** – `GetMarketStatus`
+- **Quotes** – `GetStockQuotes`
+- **Market depth** – `GetMarketDepth`
+- **Option Chain** – `GetOptionChain`
+
+For **Get History**, use `GetHistory(HistoryRequest{...})` as in the API Reference above.
 
 ## ⚠️ Error Handling
 
-The SDK provides comprehensive error handling:
+API methods return `(string, error)`. Check `err` and parse the response string as JSON when needed.
 
 ```go
-_, profile, err := client.GetProfile(client)
+response, err := fyModel.GetProfile()
 if err != nil {
-    // Check for specific error types
-    if fyersErr, ok := err.(*fyersgosdk.FyersError); ok {
-        switch fyersErr.Code {
-        case 401:
-            fmt.Println("Authentication failed - check your tokens")
-        case 429:
-            fmt.Println("Rate limit exceeded - wait before retrying")
-        case 500:
-            fmt.Println("Server error - try again later")
-        default:
-            fmt.Printf("API Error %d: %s\n", fyersErr.Code, fyersErr.Message)
-        }
-    } else {
-        fmt.Printf("Network error: %v\n", err)
-    }
+    fmt.Printf("Error: %v\n", err)
     return
 }
+// response is JSON string; unmarshal for structured access
 ```
 
 ## 🔧 Configuration
 
-### Environment Variables
-
-You can configure the SDK using environment variables:
-
-```bash
-export FYERS_CLIENT_ID="your_client_id"
-export FYERS_APP_ID="your_app_id"
-export FYERS_APP_SECRET="your_app_secret"
-export FYERS_REDIRECT_URL="your_redirect_url"
-```
-
-### Custom HTTP Client
-
-```go
-// Create custom HTTP client with timeout
-httpClient := &http.Client{
-    Timeout: 30 * time.Second,
-}
-
-// Initialize client with custom HTTP client
-client := fyersgosdk.SetClientData(clientId, appId, appSecret, redirectUrl)
-client.SetHTTPClient(httpClient)
-```
+Pass credentials into `SetClientData(appId, appSecret, redirectUrl)` and `NewFyersModel(appId, accessToken)`. Prefer environment variables or a config file; do not commit secrets.
 
 ## 🧪 Testing
 
-Run the test suite:
+All tests live in a single file under the **`test/`** folder. They cover every SDK function (auth, profile, orders, GTT, trade operations, market data, alerts) without requiring real credentials; invalid/empty tokens are used so the suite runs offline.
+
+**Run all tests:**
 
 ```bash
-go test ./...
+go test ./test/
 ```
 
-Run tests with coverage:
+**Run with verbose output:**
 
 ```bash
-go test -cover ./...
+go test ./test/ -v
 ```
 
-Run specific test files:
+**Run with coverage:**
 
 ```bash
-go test ./auth_test.go
-go test ./orders_test.go
+go test ./test/ -cover
 ```
+
+**Run with valid token (log all API responses):**  
+Set `FYERS_APP_ID` and `FYERS_ACCESS_TOKEN`; then run the JSON-driven test. All case inputs and API responses are written to `test/test_output.json` and `test/report-YYYY-MM-DD.txt`. Do not commit the token; use env only.
+
+```bash
+FYERS_APP_ID=your_app_id FYERS_ACCESS_TOKEN=your_token go test ./test/ -v -run TestRunAllFromJSON
+```
+
+**Validation test with token:**  
+Runs the case names listed in `test_cases.json` under `validationCases` (profile, funds, holdings, order book, positions, trade book, market status, history, quotes, depth, option chain, alerts by default) and fails if any response is not success (`s:"ok"` or `code: 200`). Add or remove names in `validationCases` to change which APIs are validated. Skipped if `FYERS_APP_ID` or `FYERS_ACCESS_TOKEN` is not set.
+
+```bash
+FYERS_APP_ID=your_app_id FYERS_ACCESS_TOKEN=your_token go test ./test/ -v -run TestRunValidationWithToken
+```
+
+**Optional integration test:** set `FYERS_APP_ID` and `FYERS_ACCESS_TOKEN` to run `TestGetProfile_WithToken` against the real API; otherwise it is skipped.
 
 ## 📊 Rate Limits
 

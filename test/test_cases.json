@@ -1,0 +1,282 @@
+{
+  "config": {
+    "appId": "",
+    "appSecret": "",
+    "redirectUrl": "https://example.com/callback",
+    "accessToken": ""
+  },
+  "validationCases": [
+    "GetProfile",
+    "GetFunds",
+    "GetHoldings",
+    "Logout",
+    "GetOrderBook",
+    "GetOrderBookByTag",
+    "GetOrderById",
+    "GetPositions",
+    "GetTradeBook",
+    "GetTradeBookByTag",
+    "SingleOrderAction",
+    "MultiOrderAction",
+    "ModifyOrder",
+    "ModifyMutliOrder",
+    "CancelOrder",
+    "CancelMutliOrder",
+    "GTTSingleOrderAction",
+    "GTTMultiOrderAction",
+    "ModifyGTTOrder",
+    "CancelGTTOrder",
+    "GetGTTOrderBook",
+    "ExitPosition",
+    "ExitPositionById",
+    "ExitPositionByProductType",
+    "CancelPendingOrders",
+    "ConvertPosition",
+    "GetMarketStatus",
+    "GetHistory",
+    "GetStockQuotes",
+    "GetMarketDepth",
+    "GetOptionChain",
+    "GetAlerts",
+    "CreateAlert",
+    "UpdateAlert",
+    "DeleteAlert",
+    "ToggleAlert"
+  ],
+  "cases": [
+    {
+      "name": "SetClientDataAndGetLoginURL",
+      "input": {
+        "appId": "test-app",
+        "appSecret": "test-secret",
+        "redirectUrl": "https://example.com/callback"
+      }
+    },
+    {
+      "name": "GenerateAccessToken",
+      "input": { "authToken": "invalid-code" }
+    },
+    {
+      "name": "GenerateAccessTokenFromRefreshToken",
+      "input": {
+        "refreshToken": "invalid-refresh",
+        "pin": "0000"
+      }
+    },
+    { "name": "GetProfile", "input": {} },
+    { "name": "GetFunds", "input": {} },
+    { "name": "GetHoldings", "input": {} },
+    { "name": "Logout", "input": {} },
+    { "name": "GetOrderBook", "input": {} },
+    {
+      "name": "GetOrderBookByTag",
+      "input": { "tag": "1:Ordertag" }
+    },
+    {
+      "name": "GetOrderById",
+      "input": { "id": "1" }
+    },
+    { "name": "GetPositions", "input": {} },
+    { "name": "GetTradeBook", "input": {} },
+    {
+      "name": "GetTradeBookByTag",
+      "input": { "tag": "2:Exit" }
+    },
+    {
+      "name": "SingleOrderAction",
+      "input": {
+        "symbol": "NSE:SBIN-EQ",
+        "qty": 1,
+        "type": 1,
+        "side": 1,
+        "productType": "CNC",
+        "limitPrice": 100,
+        "stopPrice": 0,
+        "validity": "DAY",
+        "disclosedQty": 0,
+        "offlineOrder": false,
+        "stopLoss": 0,
+        "takeProfit": 0,
+        "orderTag": ""
+      }
+    },
+    {
+      "name": "MultiOrderAction",
+      "input": {
+        "orders": [
+          {
+            "symbol": "NSE:SBIN-EQ",
+            "qty": 1,
+            "type": 1,
+            "side": 1,
+            "productType": "CNC",
+            "validity": "DAY"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModifyOrder",
+      "input": {
+        "id": "1",
+        "qty": 10,
+        "type": 1,
+        "side": 1,
+        "limitPrice": 100
+      }
+    },
+    {
+      "name": "ModifyMutliOrder",
+      "input": {
+        "requests": [
+          { "id": 8102710298291, "type": 1, "limitPrice": 61049, "qty": 1 },
+          { "id": 8102710298292, "type": 1, "limitPrice": 61049, "qty": 1 }
+        ]
+      }
+    },
+    {
+      "name": "CancelOrder",
+      "input": { "id": "23030900015105" }
+    },
+    {
+      "name": "CancelMutliOrder",
+      "input": { "orderIds": ["808058117761", "808058117762"] }
+    },
+    {
+      "name": "GTTSingleOrderAction",
+      "input": {
+        "side": 1,
+        "symbol": "NSE:SBIN-EQ",
+        "productType": "CNC",
+        "orderInfo": {
+          "leg1": { "price": 100, "triggerPrice": 100, "qty": 1 }
+        }
+      }
+    },
+    {
+      "name": "GTTMultiOrderAction",
+      "input": {
+        "orders": [
+          {
+            "side": 1,
+            "symbol": "NSE:SBIN-EQ",
+            "productType": "CNC",
+            "orderInfo": {
+              "leg1": { "price": 10000, "triggerPrice": 10000, "qty": 3 },
+              "leg2": { "price": 990, "triggerPrice": 990, "qty": 3 }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModifyGTTOrder",
+      "input": {
+        "requests": [
+          {
+            "id": "26021800001427",
+            "orderInfo": {
+              "leg1": { "price": 1750, "triggerPrice": 1749, "qty": 5 },
+              "leg2": { "price": 1700, "triggerPrice": 1701, "qty": 5 }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CancelGTTOrder",
+      "input": { "orderId": "25111300002007" }
+    },
+    { "name": "GetGTTOrderBook", "input": {} },
+    { "name": "ExitPosition", "input": {} },
+    {
+      "name": "ExitPositionById",
+      "input": { "orderIds": ["NSE:IDEA-EQ-INTRADAY"] }
+    },
+    {
+      "name": "ExitPositionByProductType",
+      "input": {
+        "segment": [10],
+        "side": [1, -1],
+        "productType": ["INTRADAY", "CNC"]
+      }
+    },
+    {
+      "name": "CancelPendingOrders",
+      "input": {
+        "pending_orders_cancel": 1,
+        "id": ""
+      }
+    },
+    {
+      "name": "ConvertPosition",
+      "input": {
+        "symbol": "MCX:SILVERMIC20NOVFUT-INTRADAY",
+        "positionSide": 1,
+        "convertQty": 1,
+        "convertFrom": "INTRADAY",
+        "convertTo": "CNC",
+        "overnight": 1
+      }
+    },
+    { "name": "GetMarketStatus", "input": {} },
+    {
+      "name": "GetHistory",
+      "input": {
+        "symbol": "NSE:SBIN-EQ",
+        "resolution": "30",
+        "date_format": "1",
+        "range_from": "2021-01-01",
+        "range_to": "2021-01-02",
+        "cont_flag": ""
+      }
+    },
+    {
+      "name": "GetStockQuotes",
+      "input": { "symbols": ["NSE:SBIN-EQ", "NSE:NIFTY50-INDEX"] }
+    },
+    {
+      "name": "GetMarketDepth",
+      "input": {
+        "symbol": "NSE:SBIN-EQ",
+        "ohlcv_flag": "1"
+      }
+    },
+    {
+      "name": "GetOptionChain",
+      "input": {
+        "symbol": "NSE:SBIN-EQ",
+        "strikecount": 10,
+        "timestamp": ""
+      }
+    },
+    { "name": "GetAlerts", "input": {} },
+    {
+      "name": "CreateAlert",
+      "input": {
+        "symbol": "NSE:SBIN-EQ",
+        "agent": "",
+        "alert-type": 0,
+        "comparisonType": "",
+        "condition": "",
+        "value": 0,
+        "name": ""
+      }
+    },
+    {
+      "name": "UpdateAlert",
+      "input": {
+        "alertId": "1",
+        "alertRequest": {}
+      }
+    },
+    {
+      "name": "DeleteAlert",
+      "input": { "alertId": "1" }
+    },
+    {
+      "name": "ToggleAlert",
+      "input": { "alertId": "1" }
+    }
+  ]
+}
