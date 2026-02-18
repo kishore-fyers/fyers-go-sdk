@@ -357,7 +357,12 @@ type ModifyOrderRequest struct {
 	LimitPrice float64 `json:"limitPrice"`
 }
 
-type ModifyMutliOrderRequest struct {
+// ModifyMultiOrderItem is one item in the PATCH /multi-order/sync body (array of these).
+type ModifyMultiOrderItem struct {
+	Id         int64   `json:"id"`
+	Type       int     `json:"type"`
+	LimitPrice float64 `json:"limitPrice"`
+	Qty        int     `json:"qty"`
 }
 
 type CancelOrderRequest struct {

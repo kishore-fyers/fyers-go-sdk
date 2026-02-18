@@ -18,8 +18,17 @@ func (m *FyersModel) ModifyOrder(orderRequest ModifyOrderRequest) (string, error
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) ModifyMutliOrder() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, MultipleOrderActionURL, nil, m.authHeader())
+func (m *FyersModel) ModifyMutliOrder(requests []ModifyMultiOrderItem) (string, error) {
+	if len(requests) == 0 {
+		return "", fmt.Errorf("at least one order modification required")
+	}
+	body, err := json.Marshal(requests)
+	if err != nil {
+		return "", fmt.Errorf("marshal multi order request: %w", err)
+	}
+	headers := m.authHeader()
+	headers.Set("Content-Type", "application/json")
+	resp, err := m.httpClient.DoRaw(http.MethodPatch, MultipleOrderActionURL, body, headers)
 	if err != nil {
 		return "", err
 	}
