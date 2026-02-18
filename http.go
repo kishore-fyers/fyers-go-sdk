@@ -91,7 +91,7 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 
 	// If a content-type isn't set, set the default one.
 	if req.Header.Get("Content-Type") == "" {
-		if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
+		if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		}
 	}
