@@ -6,13 +6,11 @@ import (
 	"net/http"
 )
 
-func SetClientData(clientId, appId, appSecret, redirectUrl, pin string) *Client {
+func SetClientData(appId, appSecret, redirectUrl string) *Client {
 	client := &Client{
-		clientId:    clientId,
 		appId:       appId,
 		appSecret:   appSecret,
 		redirectUrl: redirectUrl,
-		pin:         pin,
 		httpClient:  NewHTTPClient(nil, nil, false),
 	}
 
@@ -34,10 +32,6 @@ func (c *Client) SetAccessToken(accessToken string) *Client {
 	return c
 }
 
-func (c *Client) SetRefreshToken(refreshToken string) *Client {
-	c.refreshToken = refreshToken
-	return c
-}
 func (c *Client) GetLoginURL() string {
 	return fmt.Sprintf("%s&client_id=%s&redirect_uri=%s&response_type=%s&state=%s", GenerateAuthCodeURL, c.appId, c.redirectUrl, "code", "sample_state")
 }
@@ -74,15 +68,17 @@ func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string
 	return string(response.Body), nil
 }
 
-func (c *Client) GenerateAccessTokenFromRefreshToken(fyClient *Client) (string, error) {
+func (c *Client) GenerateAccessTokenFromRefreshToken(refreshToken, pin string, fyClient *Client) (string, error) {
 	// Get SHA256 checksum
 	h := sha256.New()
 	h.Write([]byte(fyClient.appId + ":" + fyClient.appSecret))
 
 	// Create JSON request body
-	requestBody := fmt.Sprintf(`{"refresh_token":"%s","appIdHash":"%s","grant_type":"refresh_token","pin":"%s"}`, fyClient.refreshToken, fmt.Sprintf("%x", h.Sum(nil)), fyClient.pin)
+	requestBody := fmt.Sprintf(`{"refresh_token":"%s","appIdHash":"%s","grant_type":"refresh_token","pin":"%s"}`, refreshToken, fmt.Sprintf("%x", h.Sum(nil)), pin)
 
-	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateAuthCodeURL, []byte(requestBody), nil)
+	headers := make(http.Header)
+	headers.Set("Content-Type", "application/json")
+	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateRefreshTokenURL, []byte(requestBody), headers)
 	if err != nil {
 		return "", err
 	}

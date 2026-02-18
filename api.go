@@ -7,10 +7,11 @@ const (
 	Websocket    = "wss://socket.fyers.in/trade/v3"
 	HSMWebsocket = "socket.fyers.in/hsm/v1-5/prod"
 
-	ValidateAuthCodeURL = BaseURL + "/validate-authcode"
-	GenerateAuthCodeURL = BaseURL + "/generate-authcode?"
-	LogoutURL           = BaseURL + "/logout"
-	SymbolTokenURL      = BaseDataURL + "/symbol-token"
+	ValidateAuthCodeURL     = BaseURL + "/validate-authcode"
+	GenerateAuthCodeURL     = BaseURL + "/generate-authcode?"
+	ValidateRefreshTokenURL = BaseURL + "/validate-refresh-token"
+	LogoutURL               = BaseURL + "/logout"
+	SymbolTokenURL          = BaseDataURL + "/symbol-token"
 
 	ProfileURL             = BaseURL + "/profile"
 	FundURL                = BaseURL + "/funds"
