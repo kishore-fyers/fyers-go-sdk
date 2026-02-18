@@ -43,7 +43,6 @@ func (m *FyersModel) ModifyGTTOrder(orderRequests []ModifyGTTOrderRequest) (stri
 		return "", fmt.Errorf("marshal order request: %w", err)
 	}
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	resp, err := m.httpClient.DoRaw(http.MethodPatch, GTTOrderURL, body, headers)
 	if err != nil {
 		return "", err

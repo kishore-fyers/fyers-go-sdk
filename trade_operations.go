@@ -27,7 +27,6 @@ func (m *FyersModel) ModifyMutliOrder(requests []ModifyMultiOrderItem) (string, 
 		return "", fmt.Errorf("marshal multi order request: %w", err)
 	}
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	resp, err := m.httpClient.DoRaw(http.MethodPatch, MultipleOrderActionURL, body, headers)
 	if err != nil {
 		return "", err
@@ -35,16 +34,32 @@ func (m *FyersModel) ModifyMutliOrder(requests []ModifyMultiOrderItem) (string, 
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) CancelOrder() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodDelete, OrderBookURL, []byte("{}"), m.authHeader())
+func (m *FyersModel) CancelOrder(Id string) (string, error) {
+	body, err := json.Marshal(CancelOrderRequest{Id: Id})
+	if err != nil {
+		return "", fmt.Errorf("marshal cancel order request: %w", err)
+	}
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, SingleOrderActionURL, body, m.authHeader())
 	if err != nil {
 		return "", err
 	}
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) CancelMutliOrder() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, MultiLegOrderURL, nil, m.authHeader())
+func (m *FyersModel) CancelMutliOrder(orderIds []string) (string, error) {
+	if len(orderIds) == 0 {
+		return "", fmt.Errorf("at least one order cancellation required")
+	}
+	bodyItems := make([]CancelOrderRequest, len(orderIds))
+	for i, id := range orderIds {
+		bodyItems[i] = CancelOrderRequest{Id: id}
+	}
+	body, err := json.Marshal(bodyItems)
+	if err != nil {
+		return "", fmt.Errorf("marshal multi order cancellation request: %w", err)
+	}
+	headers := m.authHeader()
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, MultipleOrderActionURL, body, headers)
 	if err != nil {
 		return "", err
 	}
@@ -60,32 +75,60 @@ func (m *FyersModel) ExitPosition() (string, error) {
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) ExitPositionById() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
+func (m *FyersModel) ExitPositionById(orderId []string) (string, error) {
+	if len(orderId) == 0 {
+		return "", fmt.Errorf("at least one order id required")
+	}
+	bodyItems := make([]map[string]string, len(orderId))
+	for i, id := range orderId {
+		bodyItems[i] = map[string]string{"orderId": id}
+	}
+	body, err := json.Marshal(bodyItems)
+	if err != nil {
+		return "", fmt.Errorf("marshal exit position by id request: %w", err)
+	}
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, body, m.authHeader())
 	if err != nil {
 		return "", err
 	}
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) ExitPositionByProductType() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
+func (m *FyersModel) ExitPositionByProductType(req ExitPositionByProductTypeRequest) (string, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("marshal exit position by product type request: %w", err)
+	}
+	headers := m.authHeader()
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, PositionURL, body, headers)
 	if err != nil {
 		return "", err
 	}
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) CancelPendingOrders() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
+func (m *FyersModel) CancelPendingOrders(req CancelPendingOrdersRequest) (string, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("marshal cancel pending orders request: %w", err)
+	}
+	headers := m.authHeader()
+	resp, err := m.httpClient.DoRaw(http.MethodDelete, PositionURL, body, headers)
 	if err != nil {
 		return "", err
 	}
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) ConvertPosition() (string, error) {
-	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, nil, m.authHeader())
+// ConvertPosition sends POST to /positions with symbol, positionSide, convertQty, convertFrom, convertTo, overnight.
+func (m *FyersModel) ConvertPosition(req ConvertPositionRequest) (string, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("marshal convert position request: %w", err)
+	}
+	headers := m.authHeader()
+	headers.Set("Content-Type", "application/json")
+	resp, err := m.httpClient.DoRaw(http.MethodPost, PositionURL, body, headers)
 	if err != nil {
 		return "", err
 	}

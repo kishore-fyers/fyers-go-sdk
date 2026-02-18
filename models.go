@@ -383,6 +383,17 @@ type ConvertPositionResponse struct {
 	PositionDetails int `json:"positionDetails"`
 }
 
+type ExitPositionByProductTypeRequest struct {
+	Segment     []int    `json:"segment,omitempty"`
+	Side        []int    `json:"side,omitempty"`
+	ProductType []string `json:"productType,omitempty"`
+}
+
+type CancelPendingOrdersRequest struct {
+	Id                  string `json:"id,omitempty"`
+	PendingOrdersCancel int    `json:"pending_orders_cancel"`
+}
+
 // Broker Config
 
 type BrokerConfig struct {
