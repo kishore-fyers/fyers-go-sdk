@@ -19,9 +19,12 @@ func (m *FyersModel) GTTSingleOrderAction(orderRequest GTTOrderRequest) (string,
 }
 
 func (m *FyersModel) GTTMultiOrderAction(orderRequests []GTTOrderRequest) (string, error) {
-	body, err := json.Marshal(orderRequests)
+	if len(orderRequests) == 0 {
+		return "", fmt.Errorf("at least one order request required")
+	}
+	body, err := json.Marshal(orderRequests[0])
 	if err != nil {
-		return "", fmt.Errorf("marshal order requests: %w", err)
+		return "", fmt.Errorf("marshal order request: %w", err)
 	}
 	resp, err := m.httpClient.DoRaw(http.MethodPost, GTTOrderURL, body, m.authHeader())
 	if err != nil {
@@ -30,12 +33,17 @@ func (m *FyersModel) GTTMultiOrderAction(orderRequests []GTTOrderRequest) (strin
 	return string(resp.Body), nil
 }
 
-func (m *FyersModel) ModifyGTTOrder(orderRequest ModifyGTTOrderRequest) (string, error) {
-	body, err := json.Marshal(orderRequest)
+func (m *FyersModel) ModifyGTTOrder(orderRequests []ModifyGTTOrderRequest) (string, error) {
+	if len(orderRequests) == 0 {
+		return "", fmt.Errorf("at least one order request required")
+	}
+
+	body, err := json.Marshal(orderRequests[0])
 	if err != nil {
 		return "", fmt.Errorf("marshal order request: %w", err)
 	}
-	resp, err := m.httpClient.DoRaw(http.MethodPatch, GTTOrderURL, body, m.authHeader())
+	headers := m.authHeader()
+	resp, err := m.httpClient.DoRaw(http.MethodPatch, GTTOrderURL, body, headers)
 	if err != nil {
 		return "", err
 	}

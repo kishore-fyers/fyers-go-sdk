@@ -75,8 +75,8 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 		postBody io.Reader
 	)
 
-	// Encode POST / PUT / DELETE params.
-	if method == http.MethodPost || method == http.MethodPut || method == http.MethodDelete {
+	// Encode POST / PUT / PATCH / DELETE params.
+	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 		postBody = bytes.NewReader(reqBody)
 	}
 

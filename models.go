@@ -284,12 +284,16 @@ type GTTOrderRequest struct {
 }
 
 type OrderInfo struct {
-	Leg1 Leg1  `json:"leg1"`
-	Leg2 *Leg1 `json:"leg2,omitempty"`
-	Leg3 *Leg1 `json:"leg3,omitempty"`
+	Leg1 Leg1 `json:"leg1"`
+	Leg2 Leg2 `json:"leg2,omitempty"`
 }
 
 type Leg1 struct {
+	Price        float64 `json:"price"`
+	TriggerPrice float64 `json:"triggerPrice"`
+	Qty          int     `json:"qty"`
+}
+type Leg2 struct {
 	Price        float64 `json:"price"`
 	TriggerPrice float64 `json:"triggerPrice"`
 	Qty          int     `json:"qty"`
@@ -353,7 +357,12 @@ type ModifyOrderRequest struct {
 	LimitPrice float64 `json:"limitPrice"`
 }
 
-type ModifyMutliOrderRequest struct {
+// ModifyMultiOrderItem is one item in the PATCH /multi-order/sync body (array of these).
+type ModifyMultiOrderItem struct {
+	Id         int64   `json:"id"`
+	Type       int     `json:"type"`
+	LimitPrice float64 `json:"limitPrice"`
+	Qty        int     `json:"qty"`
 }
 
 type CancelOrderRequest struct {
@@ -372,6 +381,17 @@ type ConvertPositionRequest struct {
 type ConvertPositionResponse struct {
 	OrderResponse
 	PositionDetails int `json:"positionDetails"`
+}
+
+type ExitPositionByProductTypeRequest struct {
+	Segment     []int    `json:"segment,omitempty"`
+	Side        []int    `json:"side,omitempty"`
+	ProductType []string `json:"productType,omitempty"`
+}
+
+type CancelPendingOrdersRequest struct {
+	Id                  string `json:"id,omitempty"`
+	PendingOrdersCancel int    `json:"pending_orders_cancel"`
 }
 
 // Broker Config

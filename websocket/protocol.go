@@ -80,7 +80,6 @@ func (sc *symbolConversion) symbolToHSMToken(symbols []string) (map[string]strin
 	}
 
 	req.Header.Set("Authorization", sc.accessToken)
-	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)

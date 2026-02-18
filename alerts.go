@@ -15,7 +15,6 @@ func (m *FyersModel) GetAlerts() (string, error) {
 
 func (m *FyersModel) ToggleAlert(alertId string) (string, error) {
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	body, _ := json.Marshal(map[string]string{"alertId": alertId, "agent": "fyers-api"})
 	resp, err := m.httpClient.DoRaw(http.MethodPut, ToggleAlertURL, body, headers)
 	if err != nil {
@@ -26,7 +25,6 @@ func (m *FyersModel) ToggleAlert(alertId string) (string, error) {
 
 func (m *FyersModel) CreateAlert(alertRequest AlertRequest) (string, error) {
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	if alertRequest.Agent == "" {
 		alertRequest.Agent = "fyers-api"
 	}
@@ -43,7 +41,6 @@ func (m *FyersModel) CreateAlert(alertRequest AlertRequest) (string, error) {
 
 func (m *FyersModel) DeleteAlert(alertId string) (string, error) {
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	body, _ := json.Marshal(map[string]string{"alertId": alertId, "agent": "fyers-api"})
 	resp, err := m.httpClient.DoRaw(http.MethodDelete, AlertsURL, body, headers)
 	if err != nil {
@@ -54,7 +51,6 @@ func (m *FyersModel) DeleteAlert(alertId string) (string, error) {
 
 func (m *FyersModel) UpdateAlert(alertId string, alertRequest AlertRequest) (string, error) {
 	headers := m.authHeader()
-	headers.Set("Content-Type", "application/json")
 	if alertRequest.Agent == "" {
 		alertRequest.Agent = "fyers-api"
 	}

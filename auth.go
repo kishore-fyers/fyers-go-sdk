@@ -77,7 +77,6 @@ func (c *Client) GenerateAccessTokenFromRefreshToken(refreshToken, pin string, f
 	requestBody := fmt.Sprintf(`{"refresh_token":"%s","appIdHash":"%s","grant_type":"refresh_token","pin":"%s"}`, refreshToken, fmt.Sprintf("%x", h.Sum(nil)), pin)
 
 	headers := make(http.Header)
-	headers.Set("Content-Type", "application/json")
 	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateRefreshTokenURL, []byte(requestBody), headers)
 	if err != nil {
 		return "", err
