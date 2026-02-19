@@ -15,7 +15,8 @@ func (m *FyersModel) GetAlerts() (string, error) {
 
 func (m *FyersModel) ToggleAlert(alertId string) (string, error) {
 	headers := m.authHeader()
-	body, _ := json.Marshal(map[string]string{"alertId": alertId, "agent": "fyers-api"})
+	headers.Set("Content-Type", "application/json")
+	body, _ := json.Marshal(map[string]string{"alertId": alertId})
 	resp, err := m.httpClient.DoRaw(http.MethodPut, ToggleAlertURL, body, headers)
 	if err != nil {
 		return "", err
