@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-
-	// For Data Socket main: add "os", "os/signal", "syscall"
-
-	fyersgosdk "fyers-go-sdk"
+	fyersws "fyers-go-sdk/websocket"
+	// fyersgosdk "fyers-go-sdk"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 // import (
@@ -932,32 +933,125 @@ import (
 // 	}
 //   }
 
+// Data Socket
 // func main() {
-// 	appId := "AAAAAAAAA-100"
-// 	accessToken := "eyjb...."
-// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
-// 	wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
-// 		Symbols:  []string{"MCX:SILVER26MARFUT"},
-// 		DataType: "SymbolUpdate",
-// 		LiteMode: true,
-// 	})
-// 	if wsErr != nil {
-// 		fmt.Printf("Data Socket Error: %v\n", wsErr)
-// 	} else {
-// 		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+// 	appId := "Z0G0WQQT6T-101"
+// 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCcGxvM3g5LTk5NzNSV29wVVlORi1rOXJhOUJ5d1hwbGg5WFVFd000TEh3c0hVNDV5and5SHRrMzY0VW85a3Fhc01HU2o0OUQ4cnk3R1FKclotYkRYSEM4VnRpNXZrRWdJcnVJUElNRm1GMXJRekJDbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJhNTdlZjljMTlkYWZhN2U0MjQ4YmU2NzliMzE1ZmE5NGI2MzgwMmQzMGIyNDgwNDY5YWMwMzQ2MyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzcxNTQ3NDAwLCJpYXQiOjE3NzE0NzQ0MTcsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTQ3NDQxNywic3ViIjoiYWNjZXNzX3Rva2VuIn0.kIDzTammKreMO8eN9KpIvXKmC-l_T4322bS4S5sw3Rs"
+// 	accessToken := fmt.Sprintf("%s:%s", appId, token)
+// 	symbols := []string{"NSE:SBIN-EQ"}
+// 	datatype := "SymbolUpdate" // "SymbolUpdate", "DepthUpdate"
+
+// 	var dataSocket *fyersws.FyersDataSocket
+// 	onConnect := func() {
+// 		dataSocket.Subscribe(symbols, datatype)
 // 	}
+
+// 	dataSocket = fyersws.NewFyersDataSocket(
+// 		accessToken, // Access token in the format "appid:accesstoken"
+// 		"",          // Log path - leave empty to auto-create logs in the current directory
+// 		true,        // Lite mode disabled. Set to true if you want a lite response
+// 		false,       // Save response in a log file instead of printing it
+// 		true,        // Enable auto-reconnection to WebSocket on disconnection
+// 		50,          // reconnectRetry: max reconnect attempts (same as Python default; cap 50)
+// 		onConnect,   // Callback: subscribe on every connect (first + after reconnect)
+// 		onClose,     // Callback function to handle WebSocket connection close events
+// 		onError,     // Callback function to handle WebSocket errors
+// 		onMessage,   // Callback function to handle incoming messages from the WebSocket
+// 	)
+
+// 	err := dataSocket.Connect()
+// 	if err != nil {
+// 		fmt.Printf("failed to connect to Data Socket: %v", err)
+// 		return
+// 	}
+
+// 	sigChan := make(chan os.Signal, 1)
+// 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+// 	<-sigChan
+// 	fmt.Println("\nReceived interrupt signal, closing connection...")
+
+// 	dataSocket.CloseConnection()
+// 	fmt.Println("Data Socket connection closed")
+
+// }
+
+// func onMessage(message fyersws.DataResponse) {
+// 	fmt.Printf("Response: %s\n", message)
+// }
+
+// func onError(message fyersws.DataError) {
+// 	fmt.Printf("Error: %s\n", message)
+// }
+
+// func onClose(message fyersws.DataClose) {
+// 	fmt.Printf("Connection closed: %s\n", message)
 // }
 
 func main() {
 	appId := "Z0G0WQQT6T-101"
-	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCcGxvM3g5LTk5NzNSV29wVVlORi1rOXJhOUJ5d1hwbGg5WFVFd000TEh3c0hVNDV5and5SHRrMzY0VW85a3Fhc01HU2o0OUQ4cnk3R1FKclotYkRYSEM4VnRpNXZrRWdJcnVJUElNRm1GMXJRekJDbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJhNTdlZjljMTlkYWZhN2U0MjQ4YmU2NzliMzE1ZmE5NGI2MzgwMmQzMGIyNDgwNDY5YWMwMzQ2MyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzcxNTQ3NDAwLCJpYXQiOjE3NzE0NzQ0MTcsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTQ3NDQxNywic3ViIjoiYWNjZXNzX3Rva2VuIn0.kIDzTammKreMO8eN9KpIvXKmC-l_T4322bS4S5sw3Rs"
-	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
-	wsResponse2, wsErr := fyersgosdk.OrderSocket(fyModel, fyersgosdk.OrderSocketRequest{
-		TradeOperations: []string{"OnOrders", "OnTrades", "OnPositions"},
-	})
-	if wsErr != nil {
-		fmt.Printf("Order Socket Error: %v\n", wsErr)
-	} else {
-		fmt.Printf("Order Socket Response: %+v\n", wsResponse2)
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCcGxvM3g5LTk5NzNSV29wVVlORi1rOXJhOUJ5d1hwbGg5WFVFd000TEh3c0hVNDV5and5SHRrMzY0VW85a3Fhc01HU2o0OUQ4cnk3R1FKclotYkRYSEM4VnRpNXZrRWdJcnVJUElNRm1GMXJRekJDbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJhNTdlZjljMTlkYWZhN2U0MjQ4YmU2NzliMzE1ZmE5NGI2MzgwMmQzMGIyNDgwNDY5YWMwMzQ2MyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzcxNTQ3NDAwLCJpYXQiOjE3NzE0NzQ0MTcsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTQ3NDQxNywic3ViIjoiYWNjZXNzX3Rva2VuIn0.kIDzTammKreMO8eN9KpIvXKmC-l_T4322bS4S5sw3Rs"
+	accessToken := fmt.Sprintf("%s:%s", appId, token)
+	tradeOperations := []string{"OnOrders", "OnTrades", "OnPositions"}
+
+	orderSocket := fyersws.NewFyersOrderSocket(
+		accessToken,      // Access token in the format "appid:accesstoken"
+		false,            // Write to file - set to true if you want to save responses to a log file
+		"",               // Log path - leave empty to auto-create logs in the current directory
+		onOrderTrades,    // Callback function to handle trade events
+		onOrderPositions, // Callback function to handle position events
+		onOrderUpdates,   // Callback function to handle order events
+		onOrderGeneral,   // Callback function to handle general events
+		onOrderError,     // Callback function to handle WebSocket errors
+		nil,   // Callback function called when WebSocket connection is established
+		onOrderClose,     // Callback function to handle WebSocket connection close events
+		true,             // Enable auto-reconnection to WebSocket on disconnection
+		5,                // Maximum number of reconnection attempts
+	)
+
+	// Establish a connection to the Fyers Order WebSocket
+	err := orderSocket.Connect()
+	if err != nil {
+		fmt.Printf("failed to connect to Order Socket: %v", err)
+		return
 	}
+
+	if len(tradeOperations) > 0 {
+		orderSocket.SubscribeMultiple(tradeOperations)
+	}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	<-sigChan
+	fmt.Println("\nReceived interrupt signal, closing connection...")
+
+	orderSocket.CloseConnection()
+	fmt.Println("Order Socket connection closed")
 }
+
+// Order Socket callback functions
+func onOrderTrades(message fyersws.OrderMessage) {
+	fmt.Printf("Trade Response: %s\n", message)
+}
+
+func onOrderPositions(message fyersws.OrderMessage) {
+	fmt.Printf("Position Response: %s\n", message)
+}
+
+func onOrderUpdates(message fyersws.OrderMessage) {
+	fmt.Printf("Order Response: %s\n", message)
+}
+
+func onOrderGeneral(message fyersws.OrderMessage) {
+	fmt.Printf("General: %s\n", message)
+}
+
+func onOrderError(message fyersws.OrderError) {
+	fmt.Printf("Error: %s\n", message)
+}
+
+func onOrderClose(message fyersws.OrderClose) {
+	fmt.Printf("Response: %s\n", message)
+}
+

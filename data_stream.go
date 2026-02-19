@@ -1,7 +1,6 @@
 package fyersgosdk
 
 import (
-	"encoding/json"
 	"fmt"
 	fyersws "fyers-go-sdk/websocket"
 	"os"
@@ -63,31 +62,16 @@ func DataSocket(fyModel *FyersModel, webSocketRequest DataSocketRequest) (map[st
 }
 
 // Data Socket callback functions
-func onDataMessage(message map[string]interface{}) {
-	// Marshal in data_val order (ltp, vol_traded_today, ..., type, symbol, ch, chp) to match Python SDK
-	jsonData, _ := fyersws.MarshalDataResponseInOrder(message)
-	fmt.Printf("Response: %s\n", string(jsonData))
+func onDataMessage(message fyersws.DataResponse) {
+	fmt.Printf("Response: %s\n", message)
 }
 
-func onDataError(message map[string]interface{}) {
-	if invalid, exists := message["invalid_symbols"]; exists {
-		resp := map[string]interface{}{
-			"type":            "sub",
-			"code":            -300,
-			"message":         "Please provide a valid symbol",
-			"s":               "error",
-			"invalid_symbols": invalid,
-		}
-		jsonResp, _ := json.Marshal(resp)
-		fmt.Printf("Error: %s\n", jsonResp)
-		return
-	}
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Error: %s\n", string(jsonData))
+func onDataError(message fyersws.DataError) {
+	fmt.Printf("Error: %s\n", message)
 }
 
-func onDataClose(message map[string]interface{}) {
-	fmt.Printf("Connection closed: %v\n", message)
+func onDataClose(message fyersws.DataClose) {
+	fmt.Printf("Connection closed: %s\n", message)
 }
 
 // Order Socket Example
@@ -148,46 +132,28 @@ func OrderSocket(fyModel *FyersModel, orderSocketRequest OrderSocketRequest) (ma
 }
 
 // Order Socket callback functions
-func onOrderTrades(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Trade Response: %s\n", string(jsonData))
+func onOrderTrades(message fyersws.OrderMessage) {
+	fmt.Printf("Trade Response: %s\n", message)
 }
 
-func onOrderPositions(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Position Response: %s\n", string(jsonData))
+func onOrderPositions(message fyersws.OrderMessage) {
+	fmt.Printf("Position Response: %s\n", message)
 }
 
-func onOrderUpdates(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Order Response: %s\n", string(jsonData))
+func onOrderUpdates(message fyersws.OrderMessage) {
+	fmt.Printf("Order Response: %s\n", message)
 }
 
-func onOrderGeneral(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("General : %s\n", string(jsonData))
+func onOrderGeneral(message fyersws.OrderMessage) {
+	fmt.Printf("General: %s\n", message)
 }
 
-func onOrderError(message map[string]interface{}) {
-	if invalid, exists := message["invalid_symbols"]; exists {
-		resp := map[string]interface{}{
-			"type":            "sub",
-			"code":            -300,
-			"message":         "Please provide a valid symbol",
-			"s":               "error",
-			"invalid_symbols": invalid,
-		}
-		jsonResp, _ := json.Marshal(resp)
-		fmt.Printf("Error: %s\n", jsonResp)
-		return
-	}
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Error: %s\n", string(jsonData))
+func onOrderError(message fyersws.OrderError) {
+	fmt.Printf("Error: %s\n", message)
 }
 
-func onOrderClose(message map[string]interface{}) {
-	jsonData, _ := json.Marshal(message)
-	fmt.Printf("Response: %s\n", string(jsonData))
+func onOrderClose(message fyersws.OrderClose) {
+	fmt.Printf("Response: %s\n", message)
 }
 
 func onOrderConnect() {

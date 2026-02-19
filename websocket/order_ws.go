@@ -13,6 +13,42 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// OrderMessage wraps order/trade/position/general payloads for order socket callbacks. Implements fmt.Stringer for JSON output.
+type OrderMessage map[string]interface{}
+
+// String returns the message as JSON.
+func (o OrderMessage) String() string {
+	b, err := json.Marshal(map[string]interface{}(o))
+	if err != nil {
+		return fmt.Sprintf("%v", map[string]interface{}(o))
+	}
+	return string(b)
+}
+
+// OrderError wraps the error payload for order socket OnError. Implements fmt.Stringer for JSON output.
+type OrderError map[string]interface{}
+
+// String returns the error as JSON.
+func (o OrderError) String() string {
+	b, err := json.Marshal(map[string]interface{}(o))
+	if err != nil {
+		return fmt.Sprintf("%v", map[string]interface{}(o))
+	}
+	return string(b)
+}
+
+// OrderClose wraps the close payload for order socket OnClose. Implements fmt.Stringer for JSON output.
+type OrderClose map[string]interface{}
+
+// String returns the close message as JSON.
+func (o OrderClose) String() string {
+	b, err := json.Marshal(map[string]interface{}(o))
+	if err != nil {
+		return fmt.Sprintf("%v", map[string]interface{}(o))
+	}
+	return string(b)
+}
+
 // FyersOrderSocket represents the order WebSocket client
 type FyersOrderSocket struct {
 	accessToken          string
@@ -23,16 +59,16 @@ type FyersOrderSocket struct {
 	writeToFile          bool
 	backgroundFlag       bool
 	reconnectDelay       int
-	onTrades             func(map[string]interface{})
-	onPosition           func(map[string]interface{})
+	onTrades             func(OrderMessage)
+	onPosition           func(OrderMessage)
 	restartFlag          bool
-	onOrder              func(map[string]interface{})
-	onGeneral            func(map[string]interface{})
-	onError              func(map[string]interface{})
+	onOrder              func(OrderMessage)
+	onGeneral            func(OrderMessage)
+	onError              func(OrderError)
 	onOpen               func()
 	maxReconnectAttempts int
 	reconnectAttempts    int
-	onClose              func(map[string]interface{})
+	onClose              func(OrderClose)
 	runningThread        bool
 	url                  string
 	positionMapper       map[string]interface{}
@@ -51,13 +87,13 @@ func NewFyersOrderSocket(
 	accessToken string,
 	writeToFile bool,
 	logPath string,
-	onTrades func(map[string]interface{}),
-	onPositions func(map[string]interface{}),
-	onOrders func(map[string]interface{}),
-	onGeneral func(map[string]interface{}),
-	onError func(map[string]interface{}),
+	onTrades func(OrderMessage),
+	onPositions func(OrderMessage),
+	onOrders func(OrderMessage),
+	onGeneral func(OrderMessage),
+	onError func(OrderError),
 	onConnect func(),
-	onClose func(map[string]interface{}),
+	onClose func(OrderClose),
 	reconnect bool,
 	reconnectRetry int,
 ) *FyersOrderSocket {
@@ -236,43 +272,43 @@ func (f *FyersOrderSocket) parseOrderData(msg map[string]interface{}) map[string
 // OnTrades handles trade events
 func (f *FyersOrderSocket) OnTrades(message map[string]interface{}) {
 	if f.onTrades != nil {
-		f.onTrades(message)
+		f.onTrades(OrderMessage(message))
 	} else {
-		fmt.Printf("Trade : %v\n", message)
+		fmt.Printf("Trade : %s\n", OrderMessage(message))
 	}
 }
 
 // OnPositions handles position events
 func (f *FyersOrderSocket) OnPositions(message map[string]interface{}) {
 	if f.onPosition != nil {
-		f.onPosition(message)
+		f.onPosition(OrderMessage(message))
 	} else {
-		fmt.Printf("Position : %v\n", message)
+		fmt.Printf("Position : %s\n", OrderMessage(message))
 	}
 }
 
 // OnOrder handles order events
 func (f *FyersOrderSocket) OnOrder(message map[string]interface{}) {
 	if f.onOrder != nil {
-		f.onOrder(message)
+		f.onOrder(OrderMessage(message))
 	} else {
-		fmt.Printf("Order : %v\n", message)
+		fmt.Printf("Order : %s\n", OrderMessage(message))
 	}
 }
 
 // OnGeneral handles general events
 func (f *FyersOrderSocket) OnGeneral(message map[string]interface{}) {
 	if f.onGeneral != nil {
-		f.onGeneral(message)
+		f.onGeneral(OrderMessage(message))
 	} else {
-		fmt.Printf("General : %v\n", message)
+		fmt.Printf("General : %s\n", OrderMessage(message))
 	}
 }
 
 // OnError handles error events
 func (f *FyersOrderSocket) OnError(message interface{}) {
 	if f.onError != nil {
-		f.onError(map[string]interface{}{"error": message})
+		f.onError(OrderError{"error": message})
 	} else {
 		fmt.Printf("Error : %v\n", message)
 	}
@@ -509,7 +545,7 @@ func (f *FyersOrderSocket) CloseConnection() {
 	}
 
 	if f.onClose != nil {
-		f.onClose(map[string]interface{}{"message": "Connection closed"})
+		f.onClose(OrderClose{"message": "Connection closed"})
 	}
 }
 
