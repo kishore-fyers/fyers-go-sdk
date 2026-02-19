@@ -1,19 +1,24 @@
 package main
 
+import (
+	"fmt"
+	fyersgosdk "fyers-go-sdk"
+)
+
 // import (
 // 	"fmt"
 // 	fyersgosdk "fyers-go-sdk"
 // )
 
 // Get Auth Code URL
-// func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	appSecret := "XKCP7PAISD"
-// 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
+func main() {
+	appId := "M0R4WW1PYU-100"
+	appSecret := "XKCP7PAISD"
+	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 
-// 	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-// 	fmt.Println(fyClient.GetLoginURL())
-// }
+	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
+	fmt.Println(fyClient.GetLoginURL())
+}
 
 // Generate Access Token
 // func main() {
@@ -595,3 +600,331 @@ package main
 // 		fmt.Println("Option chain: ", response)
 // 	}
 // }
+
+// Smart Limit Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.CreateSmartOrderLimit(fyersgosdk.CreateSmartOrderLimitRequest{
+// 		Symbol:      "NSE:IDEA-EQ",
+// 		Side:        1,
+// 		Qty:         1,
+// 		ProductType: "CNC",
+// 		LimitPrice:  11,
+// 		OrderType:   1,
+// 		EndTime:     1771408094,
+// 		OnExp:       2,
+// 	})
+// 	if err != nil {
+// 		fmt.Printf("Error create smart order limit: %v\n", err)
+// 	} else {
+// 		fmt.Println("CreateSmartOrderLimit:", response)
+// 	}
+// }
+
+// // Smart Trail (Trailing Stop Loss)
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.CreateSmartOrderTrail(fyersgosdk.CreateSmartOrderTrailRequest{
+// 		Symbol:      "NSE:YESBANK-EQ",
+// 		Side:        1,
+// 		Qty:         1,
+// 		ProductType: "CNC",
+// 		StopPrice:   30,
+// 		JumpDiff:    5,
+// 		OrderType:   2,
+// 		Mpp:         1,
+// 	})
+// 	if err != nil {
+// 		fmt.Printf("Error create smart order trail: %v\n", err)
+// 	} else {
+// 		fmt.Println("CreateSmartOrderTrail:", response)
+// 	}
+// }
+
+// //Smart Step Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.CreateSmartOrderStep(fyersgosdk.CreateSmartOrderStepRequest{
+// 	  Symbol:      "NSE:TCS-EQ",
+// 	  Side:        1,
+// 	  Qty:         10,
+// 	  ProductType: "CNC",
+// 	  InitQty:     2,
+// 	  Avgqty:      2,
+// 	  Avgdiff:     5,
+// 	  Direction:   1,
+// 	  LimitPrice:  750,
+// 	  OrderType:   1,
+// 	  StartTime:   1769067000,
+// 	  EndTime:     1771408094,
+// 	  Hpr:         800,
+// 	  Lpr:         700,
+// 	  Mpp:         1,
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error create smart order step: %v\n", err)
+// 	} else {
+// 	  fmt.Println("CreateSmartOrderStep:", response)
+// 	}
+//   }
+
+// //  Modify Smart Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	// Use flowId of an active smart order. Send only fields that apply to the flow type.
+// 	response, err := fyModel.ModifySmartOrder(fyersgosdk.ModifySmartOrderRequest{
+// 	  FlowId:     "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
+// 	  Qty:        ptrInt(10),
+// 	  LimitPrice: ptrFloat64(31),
+// 	  EndTime:    ptrInt64(1769766253),
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error modify smart order: %v\n", err)
+// 	} else {
+// 	  fmt.Println("ModifySmartOrder:", response)
+// 	}
+//   }
+
+//   func ptrInt(v int) *int { return &v }
+//   func ptrFloat64(v float64) *float64 { return &v }
+//   func ptrInt64(v int64) *int64 { return &v }
+
+// // Cancel Smart Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.CancelSmartOrder(fyersgosdk.FlowIdRequest{
+// 	  FlowId: "bcd1ecb9-f7e0-405d-9585-d8cb86cbb1f1",
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error cancel smart order: %v\n", err)
+// 	} else {
+// 	  fmt.Println("CancelSmartOrder:", response)
+// 	}
+//   }
+
+// // Pause Smart Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.PauseSmartOrder(fyersgosdk.FlowIdRequest{
+// 	  FlowId: "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error pause smart order: %v\n", err)
+// 	} else {
+// 	  fmt.Println("PauseSmartOrder:", response)
+// 	}
+//   }
+
+// // Resume Smart Order
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.ResumeSmartOrder(fyersgosdk.FlowIdRequest{
+// 	  FlowId: "bcd1ecb9-f7e0-405d-9585-d8cb86cbb1f1",
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error resume smart order: %v\n", err)
+// 	} else {
+// 	  fmt.Println("ResumeSmartOrder:", response)
+// 	}
+//   }
+
+//   // Smart Order Book
+//   func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	// Pass nil for no filter, or use GetSmartExitTriggerFilter for filtering.
+// 	response, err := fyModel.GetSmartOrderBookWithFilter(nil)
+// 	if err != nil {
+// 	  fmt.Printf("Error get smart order book: %v\n", err)
+// 	} else {
+// 	  fmt.Println("GetSmartOrderBookWithFilter:", response)
+// 	}
+//   }
+
+// //Create Smart Exit
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	// type: 1=Only Alert, 2=Exit with Alert, 3=Exit with Alert + Wait for Recovery; waitTime required for type 3
+// 	response, err := fyModel.CreateSmartExitTrigger(fyersgosdk.CreateSmartExitTriggerRequest{
+// 	  Name:       "Auto Exit Strategy",
+// 	  Type:       2,
+// 	  ProfitRate: 615.01,
+// 	  LossRate:   0,
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error create smart exit trigger: %v\n", err)
+// 	} else {
+// 	  fmt.Println("CreateSmartExitTrigger:", response)
+// 	}
+//   }
+
+// // Fetch Smart Exit
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	// Pass nil for all, or &fyersgosdk.GetSmartExitTriggerFilter{FlowId: "..."} for one.
+// 	response, err := fyModel.GetSmartExitTrigger(nil)
+// 	if err != nil {
+// 	  fmt.Printf("Error get smart exit trigger: %v\n", err)
+// 	} else {
+// 	  fmt.Println("GetSmartExitTrigger:", response)
+// 	}
+//   }
+
+// // Modify / Activate / Deactivate Smart Exit
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	// Update Smart Exit Trigger
+// 	response, err := fyModel.UpdateSmartExitTrigger(fyersgosdk.UpdateSmartExitTriggerRequest{
+// 	  FlowId:     "cbbb00ef-f267-40e4-b5b4-886ee9c3c000",
+// 	  ProfitRate: ptrFloat64(615.3),
+// 	  LossRate:   ptrFloat64(614.90),
+// 	  Type:       ptrInt(3),
+// 	  Name:       ptrString("re-test"),
+// 	  WaitTime:   ptrInt(5),
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error update smart exit trigger: %v\n", err)
+// 	} else {
+// 	  fmt.Println("UpdateSmartExitTrigger:", response)
+// 	}
+
+// 	// Activate/Deactivate Smart Exit Trigger
+// 	actResponse, err := fyModel.ActivateDeactivateSmartExitTrigger(fyersgosdk.FlowIdRequest{
+// 	  FlowId: "73803b90-49c0-423d-ac4f-7940b91c36c8",
+// 	})
+// 	if err != nil {
+// 	  fmt.Printf("Error activate/deactivate smart exit trigger: %v\n", err)
+// 	} else {
+// 	  fmt.Println("ActivateDeactivateSmartExitTrigger:", actResponse)
+// 	}
+//   }
+
+//   func ptrFloat64(v float64) *float64 { return &v }
+//   func ptrInt(v int) *int { return &v }
+//   func ptrString(v string) *string { return &v }
+
+// // Create Price Alert
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	alertReq := fyersgosdk.AlertRequest{
+// 	  Symbol:         "NSE:SBIN-EQ",
+// 	  Name:           "NSE:SBIN-EQ alert",
+// 	  Agent:          "fyers-api",
+// 	  AlertType:      1,
+// 	  ComparisonType: "LTP",
+// 	  Condition:      "GT",
+// 	  Value:          600.0,
+// 	}
+// 	response, err := fyModel.CreateAlert(alertReq)
+// 	if err != nil {
+// 	  fmt.Printf("Error creating alert: %v\n", err)
+// 	} else {
+// 	  fmt.Println("Create Alert Response: ", response)
+// 	}
+//   }
+
+// // Get Price Alerts
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	response, err := fyModel.GetAlerts()
+// 	if err != nil {
+// 	  fmt.Printf("Error get alerts: %v\n", err)
+// 	} else {
+// 	  fmt.Println("Get Alerts Response: ", response)
+// 	}
+//   }
+
+// // Modify Price Alert
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+
+// 	alertReq := fyersgosdk.AlertRequest{
+// 	  Symbol:         "NSE:SBIN-EQ",
+// 	  Name:           "NSE:NIFTY50-INDEX",
+// 	  Agent:          "fyers-api",
+// 	  AlertType:      1,
+// 	  ComparisonType: "LTP",
+// 	  Condition:      "GT",
+// 	  Value:          25423.49,
+// 	}
+// 	response, err := fyModel.UpdateAlert("6137795", alertReq)
+// 	if err != nil {
+// 	  fmt.Printf("Error updating alert: %v\n", err)
+// 	} else {
+// 	  fmt.Println("Update Alert Response: ", response)
+// 	}
+//   }
+
+// // Delete Price Alert
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// 	exampleAlertId := "6137795" // Use an ID from GetAlerts response after parsing
+
+// 	if exampleAlertId != "" {
+// 	  response, err := fyModel.DeleteAlert(exampleAlertId)
+// 	  if err != nil {
+// 		fmt.Printf("Error deleting alert: %v\n", err)
+// 	  } else {
+// 		fmt.Println("Delete Alert Response: ", response)
+// 	  }
+// 	}
+//   }
+
+// // Enable/Disable Price Alert
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// 	exampleAlertId := "" // Use an ID from GetAlerts response after parsing
+
+// 	if exampleAlertId != "" {
+// 	  response, err := fyModel.ToggleAlert(exampleAlertId)
+// 	  if err != nil {
+// 		fmt.Printf("Error toggling alert: %v\n", err)
+// 	  } else {
+// 		fmt.Println("Toggle Alert Response: ", response)
+// 	  }
+// 	}
+//   }
