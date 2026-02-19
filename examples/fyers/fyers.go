@@ -11,14 +11,14 @@ import (
 // )
 
 // Get Auth Code URL
-func main() {
-	appId := "M0R4WW1PYU-100"
-	appSecret := "XKCP7PAISD"
-	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
+// func main() {
+// 	appId := "M0R4WW1PYU-100"
+// 	appSecret := "XKCP7PAISD"
+// 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 
-	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-	fmt.Println(fyClient.GetLoginURL())
-}
+// 	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
+// 	fmt.Println(fyClient.GetLoginURL())
+// }
 
 // Generate Access Token
 // func main() {
@@ -677,29 +677,25 @@ func main() {
 // 	}
 //   }
 
-// //  Modify Smart Order
-// func main() {
-// 	appId := "AAAAAAAAA-100"
-// 	accessToken := "eyjb...."
-// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// Modify Smart Order
+func main() {
+	appId := "AAAAAAAAA-100"
+	accessToken := "eyjb...."
+	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 
-// 	// Use flowId of an active smart order. Send only fields that apply to the flow type.
-// 	response, err := fyModel.ModifySmartOrder(fyersgosdk.ModifySmartOrderRequest{
-// 	  FlowId:     "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
-// 	  Qty:        ptrInt(10),
-// 	  LimitPrice: ptrFloat64(31),
-// 	  EndTime:    ptrInt64(1769766253),
-// 	})
-// 	if err != nil {
-// 	  fmt.Printf("Error modify smart order: %v\n", err)
-// 	} else {
-// 	  fmt.Println("ModifySmartOrder:", response)
-// 	}
-//   }
-
-//   func ptrInt(v int) *int { return &v }
-//   func ptrFloat64(v float64) *float64 { return &v }
-//   func ptrInt64(v int64) *int64 { return &v }
+	// Use flowId of an active smart order. Send only fields that apply to the flow type.
+	response, err := fyModel.ModifySmartOrder(fyersgosdk.ModifySmartOrderRequest{
+		FlowId:     "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
+		Qty:        10,
+		LimitPrice: 31,
+		EndTime:    1769766253,
+	})
+	if err != nil {
+		fmt.Printf("Error modify smart order: %v\n", err)
+	} else {
+		fmt.Println("ModifySmartOrder:", response)
+	}
+}
 
 // // Cancel Smart Order
 // func main() {
