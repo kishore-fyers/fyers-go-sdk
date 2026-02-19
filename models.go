@@ -357,7 +357,7 @@ type CreateSmartOrderLimitRequest struct {
 	ProductType  string   `json:"productType"`
 	LimitPrice   float64  `json:"limitPrice"`
 	StopPrice    *float64 `json:"stopPrice,omitempty"`
-	OrderType   int      `json:"orderType"`
+	OrderType    int      `json:"orderType"`
 	EndTime      int64    `json:"endTime"`
 	Hpr          float64  `json:"hpr"`
 	Lpr          float64  `json:"lpr"`
@@ -380,7 +380,7 @@ type CreateSmartOrderStepRequest struct {
 	Avgdiff      float64  `json:"avgdiff"`
 	Direction    int      `json:"direction"`
 	LimitPrice   float64  `json:"limitPrice"`
-	OrderType   int      `json:"orderType"`
+	OrderType    int      `json:"orderType"`
 	StartTime    int64    `json:"startTime"`
 	EndTime      int64    `json:"endTime"`
 	Hpr          float64  `json:"hpr"`
@@ -395,25 +395,25 @@ type CreateSmartOrderStepRequest struct {
 
 // CreateSmartOrderSIPRequest is the request body for create smart order SIP.
 type CreateSmartOrderSIPRequest struct {
-	Symbol        string   `json:"symbol"`
-	Side          int      `json:"side"`
-	Amount        float64  `json:"amount"`
-	ProductType   string   `json:"productType"`
-	Freq          int      `json:"freq"`
-	SipDay        int      `json:"sip_day"`
-	ImdStart      bool     `json:"imd_start"`
-	EndTime       int64    `json:"endTime"`
-	Hpr           float64  `json:"hpr"`
-	Lpr           float64  `json:"lpr"`
-	StepUpFreq    int      `json:"step_up_freq"`
-	StepUpAmount  float64  `json:"step_up_amount"`
-	Qty           *int     `json:"qty,omitempty"`
-	Type          *int     `json:"type,omitempty"`
-	LimitPrice    *float64 `json:"limitPrice,omitempty"`
-	StopPrice     *float64 `json:"stopPrice,omitempty"`
-	Validity      *string  `json:"validity,omitempty"`
-	DisclosedQty  *int     `json:"disclosedQty,omitempty"`
-	OfflineOrder  *bool    `json:"offlineOrder,omitempty"`
+	Symbol       string   `json:"symbol"`
+	Side         int      `json:"side"`
+	Amount       float64  `json:"amount"`
+	ProductType  string   `json:"productType"`
+	Freq         int      `json:"freq"`
+	SipDay       int      `json:"sip_day"`
+	ImdStart     bool     `json:"imd_start"`
+	EndTime      int64    `json:"endTime"`
+	Hpr          float64  `json:"hpr"`
+	Lpr          float64  `json:"lpr"`
+	StepUpFreq   int      `json:"step_up_freq"`
+	StepUpAmount float64  `json:"step_up_amount"`
+	Qty          *int     `json:"qty,omitempty"`
+	Type         *int     `json:"type,omitempty"`
+	LimitPrice   *float64 `json:"limitPrice,omitempty"`
+	StopPrice    *float64 `json:"stopPrice,omitempty"`
+	Validity     *string  `json:"validity,omitempty"`
+	DisclosedQty *int     `json:"disclosedQty,omitempty"`
+	OfflineOrder *bool    `json:"offlineOrder,omitempty"`
 }
 
 // CreateSmartOrderTrailRequest is the request body for create smart order trail.
@@ -424,7 +424,7 @@ type CreateSmartOrderTrailRequest struct {
 	ProductType  string   `json:"productType"`
 	StopPrice    float64  `json:"stopPrice"`
 	JumpDiff     float64  `json:"jump_diff"`
-	OrderType   int      `json:"orderType"`
+	OrderType    int      `json:"orderType"`
 	Mpp          float64  `json:"mpp"`
 	Type         *int     `json:"type,omitempty"`
 	LimitPrice   *float64 `json:"limitPrice,omitempty"`
@@ -437,16 +437,16 @@ type CreateSmartOrderTrailRequest struct {
 // Use Qty, LimitPrice, EndTime, StopPrice, Hpr, Lpr for Limit/Step/Trail flows.
 // Use Amount, SipDay, Hpr, Lpr for SIP flows.
 type ModifySmartOrderRequest struct {
-	FlowId     string   `json:"flowId"`
-	Qty        *int     `json:"qty,omitempty"`
-	LimitPrice *float64 `json:"limitPrice,omitempty"`
-	EndTime    *int64   `json:"endTime,omitempty"`
-	StopPrice  *float64 `json:"stopPrice,omitempty"`
-	Hpr        *float64 `json:"hpr,omitempty"`
-	Lpr        *float64 `json:"lpr,omitempty"`
-	Amount     *float64 `json:"amount,omitempty"`     // SIP flow
-	SipDay     *int     `json:"sip_day,omitempty"`   // SIP flow
-	ProductType *string `json:"productType,omitempty"`
+	FlowId      string   `json:"flowId"`
+	Qty         *int     `json:"qty,omitempty"`
+	LimitPrice  *float64 `json:"limitPrice,omitempty"`
+	EndTime     *int64   `json:"endTime,omitempty"`
+	StopPrice   *float64 `json:"stopPrice,omitempty"`
+	Hpr         *float64 `json:"hpr,omitempty"`
+	Lpr         *float64 `json:"lpr,omitempty"`
+	Amount      *float64 `json:"amount,omitempty"`  // SIP flow
+	SipDay      *int     `json:"sip_day,omitempty"` // SIP flow
+	ProductType *string  `json:"productType,omitempty"`
 }
 
 // FlowIdRequest is the request body for cancel/pause/resume smart order and activate/deactivate smart exit trigger.
@@ -470,10 +470,10 @@ type GetSmartOrderBookFilter struct {
 
 // CreateSmartExitTriggerRequest is the request body for create smart exit trigger.
 type CreateSmartExitTriggerRequest struct {
-	Name      string  `json:"name"`
-	Type      int     `json:"type"` // 1: Only Alert, 2: Exit with Alert, 3: Exit with Alert + Wait for Recovery
+	Name       string  `json:"name"`
+	Type       int     `json:"type"` // 1: Only Alert, 2: Exit with Alert, 3: Exit with Alert + Wait for Recovery
 	ProfitRate float64 `json:"profitRate"`
-	LossRate   float64 `json:"lossRate"` // negative value
+	LossRate   float64 `json:"lossRate"`           // negative value
 	WaitTime   *int    `json:"waitTime,omitempty"` // required for type 3, in minutes
 }
 
@@ -484,15 +484,15 @@ type GetSmartExitTriggerFilter struct {
 
 // UpdateSmartExitTriggerRequest is the request body for update smart exit trigger.
 type UpdateSmartExitTriggerRequest struct {
-	FlowId      string   `json:"flowId"`
-	ProfitRate  *float64 `json:"profitRate,omitempty"`
-	LossRate    *float64 `json:"lossRate,omitempty"`
-	Type        *int     `json:"type,omitempty"`
-	Name        *string  `json:"name,omitempty"`
-	WaitTime    *int     `json:"waitTime,omitempty"`
+	FlowId       string   `json:"flowId"`
+	ProfitRate   *float64 `json:"profitRate,omitempty"`
+	LossRate     *float64 `json:"lossRate,omitempty"`
+	Type         *int     `json:"type,omitempty"`
+	Name         *string  `json:"name,omitempty"`
+	WaitTime     *int     `json:"waitTime,omitempty"`
 	TriggerPrice *float64 `json:"triggerPrice,omitempty"`
-	StopLoss    *float64 `json:"stopLoss,omitempty"`
-	TakeProfit  *float64 `json:"takeProfit,omitempty"`
+	StopLoss     *float64 `json:"stopLoss,omitempty"`
+	TakeProfit   *float64 `json:"takeProfit,omitempty"`
 }
 
 // Trade Operations
@@ -753,6 +753,7 @@ type AlertRequest struct {
 	Condition      string  `json:"condition"`
 	Value          float64 `json:"value"`
 	Name           string  `json:"name"`
+	AlertId        string  `json:"alertId,omitempty"`
 }
 
 type Alert struct {
