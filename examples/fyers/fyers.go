@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+
+	// For Data Socket main: add "os", "os/signal", "syscall"
+
 	fyersgosdk "fyers-go-sdk"
 )
 
@@ -11,14 +14,14 @@ import (
 // )
 
 // Get Auth Code URL
-func main() {
-	appId := "M0R4WW1PYU-100"
-	appSecret := "XKCP7PAISD"
-	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
-
-	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-	fmt.Println(fyClient.GetLoginURL())
-}
+// func main() {
+// 	appId := "M0R4WW1PYU-100"
+// 	appSecret := "XKCP7PAISD"
+// 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
+//
+// 	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
+// 	fmt.Println(fyClient.GetLoginURL())
+// }
 
 // Generate Access Token
 // func main() {
@@ -928,3 +931,33 @@ func main() {
 // 	  }
 // 	}
 //   }
+
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// 	wsResponse, wsErr := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
+// 		Symbols:  []string{"MCX:SILVER26MARFUT"},
+// 		DataType: "SymbolUpdate",
+// 		LiteMode: true,
+// 	})
+// 	if wsErr != nil {
+// 		fmt.Printf("Data Socket Error: %v\n", wsErr)
+// 	} else {
+// 		fmt.Printf("Data Socket Response: %+v\n", wsResponse)
+// 	}
+// }
+
+func main() {
+	appId := "Z0G0WQQT6T-101"
+	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieDowIiwieDoxIl0sImF0X2hhc2giOiJnQUFBQUFCcGxvM3g5LTk5NzNSV29wVVlORi1rOXJhOUJ5d1hwbGg5WFVFd000TEh3c0hVNDV5and5SHRrMzY0VW85a3Fhc01HU2o0OUQ4cnk3R1FKclotYkRYSEM4VnRpNXZrRWdJcnVJUElNRm1GMXJRekJDbz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJhNTdlZjljMTlkYWZhN2U0MjQ4YmU2NzliMzE1ZmE5NGI2MzgwMmQzMGIyNDgwNDY5YWMwMzQ2MyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMSwiZXhwIjoxNzcxNTQ3NDAwLCJpYXQiOjE3NzE0NzQ0MTcsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTQ3NDQxNywic3ViIjoiYWNjZXNzX3Rva2VuIn0.kIDzTammKreMO8eN9KpIvXKmC-l_T4322bS4S5sw3Rs"
+	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+	wsResponse2, wsErr := fyersgosdk.OrderSocket(fyModel, fyersgosdk.OrderSocketRequest{
+		TradeOperations: []string{"OnOrders", "OnTrades", "OnPositions"},
+	})
+	if wsErr != nil {
+		fmt.Printf("Order Socket Error: %v\n", wsErr)
+	} else {
+		fmt.Printf("Order Socket Response: %+v\n", wsResponse2)
+	}
+}

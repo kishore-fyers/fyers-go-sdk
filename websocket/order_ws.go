@@ -404,16 +404,35 @@ func (f *FyersOrderSocket) Connect() error {
 	return nil
 }
 
-// Subscribe subscribes to data types
-func (f *FyersOrderSocket) Subscribe(dataType string) {
-	// Parse data type like Python version
+// socketTypeToSlist converts one or more socket type keys (e.g. "OnOrders", "OnTrades")
+// into a single SLIST slice, matching Python's logic: comma-separated or multiple keys
+// map to one list; list values (e.g. OnGeneral) are expanded.
+func (f *FyersOrderSocket) socketTypeToSlist(dataTypes []string) []string {
 	var dataTypeList []string
-	if socketType, exists := f.socketType[dataType]; exists {
-		if list, ok := socketType.([]string); ok {
-			dataTypeList = list
-		} else if str, ok := socketType.(string); ok {
-			dataTypeList = []string{str}
+	for _, dataType := range dataTypes {
+		if socketType, exists := f.socketType[dataType]; exists {
+			if list, ok := socketType.([]string); ok {
+				dataTypeList = append(dataTypeList, list...)
+			} else if str, ok := socketType.(string); ok {
+				dataTypeList = append(dataTypeList, str)
+			}
 		}
+	}
+	return dataTypeList
+}
+
+// Subscribe subscribes to a single data type.
+func (f *FyersOrderSocket) Subscribe(dataType string) {
+	f.SubscribeMultiple([]string{dataType})
+}
+
+// SubscribeMultiple subscribes to multiple data types in one SUB_ORD message (like Python:
+// one message with SLIST e.g. ["orders","trades","positions"] so the server returns one
+// "Successfully subscribed" instead of one per type).
+func (f *FyersOrderSocket) SubscribeMultiple(dataTypes []string) {
+	dataTypeList := f.socketTypeToSlist(dataTypes)
+	if len(dataTypeList) == 0 {
+		return
 	}
 
 	msg := map[string]interface{}{
@@ -431,16 +450,16 @@ func (f *FyersOrderSocket) Subscribe(dataType string) {
 	}
 }
 
-// Unsubscribe unsubscribes from data types
+// Unsubscribe unsubscribes from a single data type.
 func (f *FyersOrderSocket) Unsubscribe(dataType string) {
-	// Parse data type like Python version
-	var dataTypeList []string
-	if socketType, exists := f.socketType[dataType]; exists {
-		if list, ok := socketType.([]string); ok {
-			dataTypeList = list
-		} else if str, ok := socketType.(string); ok {
-			dataTypeList = []string{str}
-		}
+	f.UnsubscribeMultiple([]string{dataType})
+}
+
+// UnsubscribeMultiple unsubscribes from multiple data types in one SUB_ORD message.
+func (f *FyersOrderSocket) UnsubscribeMultiple(dataTypes []string) {
+	dataTypeList := f.socketTypeToSlist(dataTypes)
+	if len(dataTypeList) == 0 {
+		return
 	}
 
 	msg := map[string]interface{}{
