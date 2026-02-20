@@ -12,7 +12,7 @@ import (
 
 // Get Auth Code URL
 func main() {
-	appId := "M0R4WW1PYU-100"
+	appId := "AAAAAAAAA-100"
 	appSecret := "XKCP7PAISD"
 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 
@@ -22,7 +22,7 @@ func main() {
 
 // Generate Access Token
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
+// 	appId := "AAAAAAAAA-100"
 // 	appSecret := "XKCP7PAISD"
 // 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 // 	authToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcHBfaWQiOiJNMFI0V1cxUFlVIiwidXVpZCI6IjRkYWU5MjQ0NmY4MDRlMWM5Y2RhNjE5NmU0MmY0MjE0IiwiaXBBZGRyIjoiIiwibm9uY2UiOiIiLCJzY29wZSI6IiIsImRpc3BsYXlfbmFtZSI6IllLMDQzOTEiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImF1ZCI6IltcImQ6MVwiLFwiZDoyXCIsXCJ4OjBcIixcIng6MVwiLFwieDoyXCJdIiwiZXhwIjoxNzcxNDIyMDMwLCJpYXQiOjE3NzEzOTIwMzAsImlzcyI6ImFwaS5sb2dpbi5meWVycy5pbiIsIm5iZiI6MTc3MTM5MjAzMCwic3ViIjoiYXV0aF9jb2RlIn0.rnEMaa8MigGEs_LSwEGoc-y0UbqjVRIwahvVccssMwU"
@@ -37,7 +37,7 @@ func main() {
 
 // Generate Access Token From Refresh Token
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
+// 	appId := "AAAAAAAAA-100"
 // 	appSecret := "XKCP7PAISD"
 // 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 // 	refreshToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCcGxVNE1xZUpQUFdYNWhWQzcyNkZQVTVXTHpjcFRXMjQ3OGFDdGJMemwybE42TmkzUEZpU0xKMHVDRldPVE9Fc3JIbjVlbWxVdVNiQ2F2UXlySTh0LXozeFdaWFo4MFRXZWFxb0JKeVdtbFFfYVNacz0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzcyNjcwNjAwLCJpYXQiOjE3NzEzOTI1MjQsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTM5MjUyNCwic3ViIjoicmVmcmVzaF90b2tlbiJ9.ogZNRYM6lWQ4RRpVeOMuzpwmbAK9MLhPB89UBaFtxCY"
@@ -53,8 +53,8 @@ func main() {
 
 // Get Profile
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCcGxXTm5QcEV5WG9xZDJTcFZoQkFLcVhRaTRBa1BtX1IzWkpWZnVwRnNxQlFyNVQxbnd5NC00eW9IOFJwVW5DV21xOVlCb3FrTVRIWDZrdUlhOHN1TzUzdVhZSVJ0VHZMdTVvU0h4YVE5cG1iUllaUT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzcxNDYxMDAwLCJpYXQiOjE3NzEzOTc5OTEsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTM5Nzk5MSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.TKbd3hc9vRH-OwotVg8FzvxodA4-7MjIL80p7MBzfZI"
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
 
 // 		fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 // 		response, err := fyModel.GetProfile()
@@ -67,8 +67,8 @@ func main() {
 
 // Get Funds
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCcGxXTm5QcEV5WG9xZDJTcFZoQkFLcVhRaTRBa1BtX1IzWkpWZnVwRnNxQlFyNVQxbnd5NC00eW9IOFJwVW5DV21xOVlCb3FrTVRIWDZrdUlhOHN1TzUzdVhZSVJ0VHZMdTVvU0h4YVE5cG1iUllaUT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzcxNDYxMDAwLCJpYXQiOjE3NzEzOTc5OTEsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTM5Nzk5MSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.TKbd3hc9vRH-OwotVg8FzvxodA4-7MjIL80p7MBzfZI"
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
 
 // 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 // 	response, err := fyModel.GetFunds()
@@ -81,8 +81,8 @@ func main() {
 
 // Get Holdings
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCcGxXTm5QcEV5WG9xZDJTcFZoQkFLcVhRaTRBa1BtX1IzWkpWZnVwRnNxQlFyNVQxbnd5NC00eW9IOFJwVW5DV21xOVlCb3FrTVRIWDZrdUlhOHN1TzUzdVhZSVJ0VHZMdTVvU0h4YVE5cG1iUllaUT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzcxNDYxMDAwLCJpYXQiOjE3NzEzOTc5OTEsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTM5Nzk5MSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.TKbd3hc9vRH-OwotVg8FzvxodA4-7MjIL80p7MBzfZI"
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
 
 // 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 // 	holdingsResp, err := fyModel.GetHoldings()
@@ -95,8 +95,8 @@ func main() {
 
 // Logout
 // func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	accessToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsiZDoxIiwiZDoyIiwieDowIiwieDoxIiwieDoyIl0sImF0X2hhc2giOiJnQUFBQUFCcGxXTm5QcEV5WG9xZDJTcFZoQkFLcVhRaTRBa1BtX1IzWkpWZnVwRnNxQlFyNVQxbnd5NC00eW9IOFJwVW5DV21xOVlCb3FrTVRIWDZrdUlhOHN1TzUzdVhZSVJ0VHZMdTVvU0h4YVE5cG1iUllaUT0iLCJkaXNwbGF5X25hbWUiOiIiLCJvbXMiOiJLMSIsImhzbV9rZXkiOiJkNWU1YWY5ZmM0NWMwMzZhY2FkZmE2M2ZhZDc1YzZhMmEwZjc3ZDRmMDFlMWJkMTNlMTc4YWI3YyIsImlzRGRwaUVuYWJsZWQiOiJZIiwiaXNNdGZFbmFibGVkIjoiWSIsImZ5X2lkIjoiWUswNDM5MSIsImFwcFR5cGUiOjEwMCwiZXhwIjoxNzcxNDYxMDAwLCJpYXQiOjE3NzEzOTc5OTEsImlzcyI6ImFwaS5meWVycy5pbiIsIm5iZiI6MTc3MTM5Nzk5MSwic3ViIjoiYWNjZXNzX3Rva2VuIn0.TKbd3hc9vRH-OwotVg8FzvxodA4-7MjIL80p7MBzfZI"
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
 
 // 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 // 	response, err := fyModel.Logout()
