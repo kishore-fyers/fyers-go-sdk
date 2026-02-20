@@ -46,7 +46,7 @@ Using Go 1.19 or newer is recommended for security and tooling support.
 ## 📦 Installation
 
 ```bash
-go get github.com/your-username/fyersgosdk
+git clone https://github.com/kishore-fyers/fyers-go-sdk.git
 ```
 
 ## 🚀 Quick Start
