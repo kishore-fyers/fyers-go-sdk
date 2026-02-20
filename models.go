@@ -244,6 +244,7 @@ type OrderRequest struct {
 	StopLoss     float64 `json:"stopLoss"`
 	TakeProfit   float64 `json:"takeProfit"`
 	OrderTag     string  `json:"orderTag"`
+	IsSliceOrder bool    `json:"isSliceOrder,omitempty"`
 }
 
 type OrderResponse struct {
