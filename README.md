@@ -1,11 +1,14 @@
-# Fyers Go SDK
+<a href="https://fyers.in/"><img src="https://assets.fyers.in/images/logo.svg" align="right" /></a>
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/your-username/fyersgosdk)](https://goreportcard.com/report/github.com/your-username/fyersgosdk)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/your-username/fyersgosdk)](https://golang.org/dl/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Fyers API](https://img.shields.io/badge/API-Fyers%20v3-blue.svg)](https://myapi.fyers.in/)
+# Fyers Go SDK : fyers-api-v3 - v1.0.0
 
-A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provides seamless integration with Fyers trading platform. This SDK enables you to build trading applications, algorithmic trading systems, and market data analysis tools using Go.
+The official Fyers Go SDK for API-V3 Users [FYERS API](https://fyers.in/products/api/).
+
+Fyers API is a set of REST-like APIs that provide integration with our in-house trading platform with which you can build your own customized trading applications.
+
+## Documentation
+
+- [Fyers API documentation](https://myapi.fyers.in/docsv3)
 
 ## 🚀 Features
 
@@ -22,6 +25,7 @@ A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provide
 
 ## 📋 Table of Contents
 
+- [Compatible Go Versions](#compatible-go-versions)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Authentication](#authentication)
@@ -32,10 +36,17 @@ A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provide
 - [Contributing](#contributing)
 - [License](#license)
 
+## Compatible Go Versions
+
+- **Minimum:** Go **1.18** (required by `go.mod`).
+- **Compatible:** Go 1.18 and any later release (1.19, 1.20, 1.21, 1.22, 1.23, etc.).
+
+Using Go 1.19 or newer is recommended for security and tooling support.
+
 ## 📦 Installation
 
 ```bash
-go get github.com/your-username/fyersgosdk
+git clone https://github.com/kishore-fyers/fyers-go-sdk.git
 ```
 
 ## 🚀 Quick Start
@@ -123,7 +134,7 @@ fmt.Println("Please visit:", loginURL)
 // Step 4: Exchange auth code for access token (returns JSON string)
 response, err := fyClient.GenerateAccessToken(authCode, fyClient)
 
-// Step 5: Or refresh token with PIN
+// Step 5: Exchange refresh token for access token
 response, err := fyClient.GenerateAccessTokenFromRefreshToken(refreshToken, pin, fyClient)
 
 // Step 6: Create FyersModel for all API calls
@@ -234,19 +245,72 @@ Use **DataSocket** for live market data (quotes, depth) and **OrderSocket** for 
 
 ```go
 // Data WebSocket (symbols, lite/full mode)
-fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
-result, err := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
-    Symbols: []string{"NSE:SBIN-EQ"},
-    LiteMode: false,
-    DataType: "symbol",
-})
+var dataSocket *fyersws.FyersDataSocket
+onConnect := func() {
+    dataSocket.Subscribe(symbols, datatype)
+}
+
+dataSocket = fyersws.NewFyersDataSocket(
+    accessToken, // Access token in the format "appid:accesstoken"
+    "",          // Log path - leave empty to auto-create logs in the current directory
+    true,        // Lite mode disabled. Set to true if you want a lite response
+    false,       // Save response in a log file instead of printing it
+    true,        // Enable auto-reconnection to WebSocket on disconnection
+    50,          // reconnectRetry: max reconnect attempts (same as Python default; cap 50)
+    onConnect,   // Callback: subscribe on every connect (first + after reconnect)
+    onClose,     // Callback function to handle WebSocket connection close events
+    onError,     // Callback function to handle WebSocket errors
+    onMessage,   // Callback function to handle incoming messages from the WebSocket
+)
+
+err := dataSocket.Connect()
+if err != nil {
+    fmt.Printf("failed to connect to Data Socket: %v", err)
+    return
+}
+
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+<-sigChan
+fmt.Println("\nReceived interrupt signal, closing connection...")
+
+dataSocket.CloseConnection()
 
 // Order WebSocket (trades, positions, orders)
-fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-fyClient.SetAccessToken(accessToken)
-result, err := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{
-    TradeOperations: []string{"OnOrders", "OnTrades", "OnPositions"},
-})
+orderSocket := fyersws.NewFyersOrderSocket(
+    accessToken,      // Access token in the format "appid:accesstoken"
+    false,            // Write to file - set to true if you want to save responses to a log file
+    "",               // Log path - leave empty to auto-create logs in the current directory
+    onOrderTrades,    // Callback function to handle trade events
+    onOrderPositions, // Callback function to handle position events
+    onOrderUpdates,   // Callback function to handle order events
+    onOrderGeneral,   // Callback function to handle general events
+    onOrderError,     // Callback function to handle WebSocket errors
+    nil,   // Callback function called when WebSocket connection is established
+    onOrderClose,     // Callback function to handle WebSocket connection close events
+    true,             // Enable auto-reconnection to WebSocket on disconnection
+    5,                // Maximum number of reconnection attempts
+)
+
+// Establish a connection to the Fyers Order WebSocket
+err := orderSocket.Connect()
+if err != nil {
+    fmt.Printf("failed to connect to Order Socket: %v", err)
+    return
+}
+
+if len(tradeOperations) > 0 {
+    orderSocket.SubscribeMultiple(tradeOperations)
+}
+
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+<-sigChan
+fmt.Println("\nReceived interrupt signal, closing connection...")
+
+orderSocket.CloseConnection()
 ```
 
 ## 📁 Examples
@@ -301,126 +365,3 @@ All runnable examples live in **[examples/fyers/fyers.go](examples/fyers/fyers.g
 - **Option Chain** – `GetOptionChain`
 
 For **Get History**, use `GetHistory(HistoryRequest{...})` as in the API Reference above.
-
-## ⚠️ Error Handling
-
-API methods return `(string, error)`. Check `err` and parse the response string as JSON when needed.
-
-```go
-response, err := fyModel.GetProfile()
-if err != nil {
-    fmt.Printf("Error: %v\n", err)
-    return
-}
-// response is JSON string; unmarshal for structured access
-```
-
-## 🔧 Configuration
-
-Pass credentials into `SetClientData(appId, appSecret, redirectUrl)` and `NewFyersModel(appId, accessToken)`. Prefer environment variables or a config file; do not commit secrets.
-
-## 🧪 Testing
-
-All tests live in a single file under the **`test/`** folder. They cover every SDK function (auth, profile, orders, GTT, trade operations, market data, alerts) without requiring real credentials; invalid/empty tokens are used so the suite runs offline.
-
-**Run all tests:**
-
-```bash
-go test ./test/
-```
-
-**Run with verbose output:**
-
-```bash
-go test ./test/ -v
-```
-
-**Run with coverage:**
-
-```bash
-go test ./test/ -cover
-```
-
-**Run with valid token (log all API responses):**  
-Set `FYERS_APP_ID` and `FYERS_ACCESS_TOKEN`; then run the JSON-driven test. All case inputs and API responses are written to `test/test_output.json` and `test/report-YYYY-MM-DD.txt`. Do not commit the token; use env only.
-
-```bash
-FYERS_APP_ID=your_app_id FYERS_ACCESS_TOKEN=your_token go test ./test/ -v -run TestRunAllFromJSON
-```
-
-**Validation test with token:**  
-Runs the case names listed in `test_cases.json` under `validationCases` (profile, funds, holdings, order book, positions, trade book, market status, history, quotes, depth, option chain, alerts by default) and fails if any response is not success (`s:"ok"` or `code: 200`). Add or remove names in `validationCases` to change which APIs are validated. Skipped if `FYERS_APP_ID` or `FYERS_ACCESS_TOKEN` is not set.
-
-```bash
-FYERS_APP_ID=your_app_id FYERS_ACCESS_TOKEN=your_token go test ./test/ -v -run TestRunValidationWithToken
-```
-
-**Optional integration test:** set `FYERS_APP_ID` and `FYERS_ACCESS_TOKEN` to run `TestGetProfile_WithToken` against the real API; otherwise it is skipped.
-
-## 📊 Rate Limits
-
-The Fyers API has rate limits to ensure fair usage:
-
-- **REST API**: 120 requests per minute per user
-- **WebSocket**: 1 connection per user
-- **Data API**: 100 requests per minute per user
-
-The SDK automatically handles rate limiting and provides appropriate error messages.
-
-## 🔒 Security
-
-- Never commit your API credentials to version control
-- Use environment variables for sensitive data
-- Implement proper token storage and refresh mechanisms
-- Validate all user inputs before sending to API
-- Use HTTPS for all communications
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Setup
-
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/your-username/fyersgosdk.git`
-3. Create a feature branch: `git checkout -b feature/amazing-feature`
-4. Make your changes and add tests
-5. Run tests: `go test ./...`
-6. Commit your changes: `git commit -m 'Add amazing feature'`
-7. Push to the branch: `git push origin feature/amazing-feature`
-8. Open a Pull Request
-
-### Code Style
-
-- Follow Go conventions and [Effective Go](https://golang.org/doc/effective_go.html)
-- Use `gofmt` for code formatting
-- Add comments for exported functions and types
-- Write tests for new functionality
-- Update documentation for API changes
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [Fyers API Documentation](https://myapi.fyers.in/)
-- **Issues**: [GitHub Issues](https://github.com/your-username/fyersgosdk/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/fyersgosdk/discussions)
-- **Email**: support@your-email.com
-
-## 🙏 Acknowledgments
-
-- [Fyers](https://fyers.in/) for providing the excellent trading API
-- The Go community for the amazing ecosystem
-- All contributors who have helped improve this SDK
-
-## 📈 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
-
----
-
-**Disclaimer**: This SDK is not officially affiliated with Fyers. Please refer to the [official Fyers API documentation](https://myapi.fyers.in/) for the most up-to-date information about the API.
-
-**Trading Risk**: Trading in financial markets involves risk. This SDK is provided as-is without any warranty. Users are responsible for their trading decisions and should understand the risks involved.
