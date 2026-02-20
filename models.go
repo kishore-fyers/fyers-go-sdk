@@ -460,30 +460,30 @@ type ModifySmartOrderRequest struct {
 	// Trail (flowtype 6): qty, limitPrice, stopPrice, jump_diff, target_price, unsetTargetPrice, mpp
 	// Step (flowtype 3): qty, startTime, endTime, hpr, lpr, mpp, avgqty, avgdiff, initQty, limitPrice, direction
 	// SIP (flowtype 7): qty, amount, hpr, lpr, sip_day, sip_time, step_up_amount, step_up_qty, exp_qty, exp_amount
-	Qty             *int     `json:"qty,omitempty"`
-	LimitPrice      *float64 `json:"limitPrice,omitempty"`
-	StopPrice       *float64 `json:"stopPrice,omitempty"`
-	EndTime         *int64   `json:"endTime,omitempty"`
-	StartTime       *int64   `json:"startTime,omitempty"`       // Step
-	Hpr             *float64 `json:"hpr,omitempty"`
-	Lpr             *float64 `json:"lpr,omitempty"`
-	Mpp             *float64 `json:"mpp,omitempty"`
-	OnExp           *int     `json:"onExp,omitempty"`           // Limit. 1=Cancel, 2=Market
-	JumpDiff        *float64 `json:"jump_diff,omitempty"`      // Trail
-	TargetPrice     *float64 `json:"target_price,omitempty"`   // Trail
-	UnsetTargetPrice *bool   `json:"unsetTargetPrice,omitempty"` // Trail. true to remove target_price
-	Avgqty          *int     `json:"avgqty,omitempty"`          // Step
-	Avgdiff         *float64 `json:"avgdiff,omitempty"`         // Step
-	InitQty         *int     `json:"initQty,omitempty"`         // Step (before order starts)
-	Direction       *int     `json:"direction,omitempty"`      // Step. 1=price drop, -1=price rise
-	Amount          *float64 `json:"amount,omitempty"`          // SIP
-	SipDay          *int     `json:"sip_day,omitempty"`        // SIP
-	SipTime         *int64   `json:"sip_time,omitempty"`       // SIP (daily/custom freq)
-	StepUpAmount    *float64 `json:"step_up_amount,omitempty"`  // SIP
-	StepUpQty       *int     `json:"step_up_qty,omitempty"`    // SIP
-	ExpQty          *int     `json:"exp_qty,omitempty"`        // SIP
-	ExpAmount       *float64 `json:"exp_amount,omitempty"`      // SIP
-	ProductType     *string  `json:"productType,omitempty"`
+	Qty              int     `json:"qty,omitempty"`
+	LimitPrice       float64 `json:"limitPrice,omitempty"`
+	StopPrice        float64 `json:"stopPrice,omitempty"`
+	EndTime          int64   `json:"endTime,omitempty"`
+	StartTime        int64   `json:"startTime,omitempty"`        // Step
+	Hpr              float64 `json:"hpr,omitempty"`
+	Lpr              float64 `json:"lpr,omitempty"`
+	Mpp              float64 `json:"mpp,omitempty"`
+	OnExp            int     `json:"onExp,omitempty"`           // Limit. 1=Cancel, 2=Market
+	JumpDiff         float64 `json:"jump_diff,omitempty"`        // Trail
+	TargetPrice      float64 `json:"target_price,omitempty"`    // Trail
+	UnsetTargetPrice bool    `json:"unsetTargetPrice,omitempty"` // Trail. true to remove target_price
+	Avgqty           int     `json:"avgqty,omitempty"`          // Step
+	Avgdiff          float64 `json:"avgdiff,omitempty"`          // Step
+	InitQty          int     `json:"initQty,omitempty"`          // Step (before order starts)
+	Direction        int     `json:"direction,omitempty"`        // Step. 1=price drop, -1=price rise
+	Amount           float64 `json:"amount,omitempty"`           // SIP
+	SipDay           int     `json:"sip_day,omitempty"`         // SIP
+	SipTime          int64   `json:"sip_time,omitempty"`         // SIP (daily/custom freq)
+	StepUpAmount     float64 `json:"step_up_amount,omitempty"`   // SIP
+	StepUpQty        int     `json:"step_up_qty,omitempty"`      // SIP
+	ExpQty           int     `json:"exp_qty,omitempty"`          // SIP
+	ExpAmount        float64 `json:"exp_amount,omitempty"`       // SIP
+	ProductType      string  `json:"productType,omitempty"`
 }
 
 // FlowIdRequest is the request body for cancel/pause/resume smart order and activate/deactivate smart exit trigger.
