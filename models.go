@@ -362,14 +362,14 @@ type CreateSmartOrderLimitRequest struct {
 	EndTime      int64    `json:"endTime"`                // Required. Unix timestamp (epoch)
 	OrderType    int      `json:"orderType"`              // Required. 1=Limit, 4=Stop-Limit
 	OnExp        int      `json:"onExp"`                  // Required. 1=Cancel, 2=Market
-	StopPrice    *float64 `json:"stopPrice,omitempty"`    // Optional. Required when orderType=4. Default 0
-	Hpr          *float64 `json:"hpr,omitempty"`          // Optional. 0=no upper limit. Order executes only below this price
-	Lpr          *float64 `json:"lpr,omitempty"`          // Optional. 0=no lower limit. Order executes only above this price
-	Mpp          *float64 `json:"mpp,omitempty"`          // Optional. 0=no market protection. Valid: 0–3 or -1 (disabled)
-	Type         *int     `json:"type,omitempty"`
-	Validity     *string  `json:"validity,omitempty"`
-	DisclosedQty *int     `json:"disclosedQty,omitempty"`
-	OfflineOrder *bool    `json:"offlineOrder,omitempty"`
+	StopPrice    float64 `json:"stopPrice,omitempty"`    // Optional. Required when orderType=4. Default 0
+	Hpr          float64 `json:"hpr,omitempty"`          // Optional. 0=no upper limit. Order executes only below this price
+	Lpr          float64 `json:"lpr,omitempty"`          // Optional. 0=no lower limit. Order executes only above this price
+	Mpp          float64 `json:"mpp,omitempty"`          // Optional. 0=no market protection. Valid: 0–3 or -1 (disabled)
+	Type         int     `json:"type,omitempty"`
+	Validity     string  `json:"validity,omitempty"`
+	DisclosedQty int     `json:"disclosedQty,omitempty"`
+	OfflineOrder bool    `json:"offlineOrder,omitempty"`
 }
 
 // CreateSmartOrderStepRequest is the request body for create smart order step.
@@ -388,16 +388,16 @@ type CreateSmartOrderStepRequest struct {
 	Direction    int      `json:"direction"`             // Required. 1=avg on decrease, -1=avg on increase
 	StartTime    int64    `json:"startTime"`             // Required. Unix timestamp (epoch)
 	EndTime      int64    `json:"endTime"`               // Required. Unix timestamp (epoch)
-	LimitPrice   *float64 `json:"limitPrice,omitempty"`  // Conditional. Required if orderType=1. Default 0
-	InitQty      *int     `json:"initQty,omitempty"`     // Optional. Qty to place immediately. Default 0 (no initial order)
-	Hpr          *float64 `json:"hpr,omitempty"`         // Optional. 0=no upper limit. Execute only below this price
-	Lpr          *float64 `json:"lpr,omitempty"`         // Optional. 0=no lower limit. Execute only above this price
-	Mpp          *float64 `json:"mpp,omitempty"`         // Optional. 0=no market protection. Valid: 0–3 or -1
-	Type         *int     `json:"type,omitempty"`
-	StopPrice    *float64 `json:"stopPrice,omitempty"`
-	Validity     *string  `json:"validity,omitempty"`
-	DisclosedQty *int     `json:"disclosedQty,omitempty"`
-	OfflineOrder *bool    `json:"offlineOrder,omitempty"`
+	LimitPrice   float64 `json:"limitPrice,omitempty"`  // Conditional. Required if orderType=1. Default 0
+	InitQty      int     `json:"initQty,omitempty"`     // Optional. Qty to place immediately. Default 0 (no initial order)
+	Hpr          float64 `json:"hpr,omitempty"`         // Optional. 0=no upper limit. Execute only below this price
+	Lpr          float64 `json:"lpr,omitempty"`         // Optional. 0=no lower limit. Execute only above this price
+	Mpp          float64 `json:"mpp,omitempty"`         // Optional. 0=no market protection. Valid: 0–3 or -1
+	Type         int     `json:"type,omitempty"`
+	StopPrice    float64 `json:"stopPrice,omitempty"`
+	Validity     string  `json:"validity,omitempty"`
+	DisclosedQty int     `json:"disclosedQty,omitempty"`
+	OfflineOrder bool    `json:"offlineOrder,omitempty"`
 }
 
 // CreateSmartOrderSIPRequest is the request body for create smart order SIP (Equity only).
@@ -410,24 +410,24 @@ type CreateSmartOrderSIPRequest struct {
 	ProductType  string   `json:"productType"`            // Required. CNC, MTF
 	Freq         int      `json:"freq"`                    // Required. 1=Daily, 2, 3, 6
 	SipDay       int      `json:"sip_day"`                 // Required. Day of month (1–28)
-	Qty          *int     `json:"qty,omitempty"`           // At least one of Qty or Amount required. Max 999999
-	Amount       *float64 `json:"amount,omitempty"`       // At least one of Qty or Amount required
-	SipTime      *int64   `json:"sip_time,omitempty"`      // Conditional. Required if freq=1. Unix timestamp (market hours)
-	ImdStart     *bool    `json:"imd_start,omitempty"`     // Optional. true=start now, false=wait for schedule
-	EndTime      *int64   `json:"endTime,omitempty"`       // Optional. 0=no end. Unix timestamp when SIP ends
-	Hpr          *float64 `json:"hpr,omitempty"`           // Optional. Skips SIP if price above this
-	Lpr          *float64 `json:"lpr,omitempty"`           // Optional. Skips SIP if price below this
-	StepUpFreq   *int     `json:"step_up_freq,omitempty"`  // Optional. 3 or 5. 0=no step-up
-	StepUpQty    *int     `json:"step_up_qty,omitempty"`   // Optional. Qty increase per step-up (Max 999999)
-	StepUpAmount *float64 `json:"step_up_amount,omitempty"` // Optional. Amount increase per step-up
-	ExpQty       *int     `json:"exp_qty,omitempty"`       // Optional. Qty for expiry/final SIP order (Max 999999)
-	Side         *int     `json:"side,omitempty"`         // Optional. 1=Buy, -1=Sell (not in spec; kept for compatibility)
-	Type         *int     `json:"type,omitempty"`
-	LimitPrice   *float64 `json:"limitPrice,omitempty"`
-	StopPrice    *float64 `json:"stopPrice,omitempty"`
-	Validity     *string  `json:"validity,omitempty"`
-	DisclosedQty *int     `json:"disclosedQty,omitempty"`
-	OfflineOrder *bool    `json:"offlineOrder,omitempty"`
+	Qty          int     `json:"qty,omitempty"`           // At least one of Qty or Amount required. Max 999999
+	Amount       float64 `json:"amount,omitempty"`       // At least one of Qty or Amount required
+	SipTime      int64   `json:"sip_time,omitempty"`      // Conditional. Required if freq=1. Unix timestamp (market hours)
+	ImdStart     bool    `json:"imd_start,omitempty"`     // Optional. true=start now, false=wait for schedule
+	EndTime      int64   `json:"endTime,omitempty"`       // Optional. 0=no end. Unix timestamp when SIP ends
+	Hpr          float64 `json:"hpr,omitempty"`           // Optional. Skips SIP if price above this
+	Lpr          float64 `json:"lpr,omitempty"`           // Optional. Skips SIP if price below this
+	StepUpFreq   int     `json:"step_up_freq,omitempty"`  // Optional. 3 or 5. 0=no step-up
+	StepUpQty    int     `json:"step_up_qty,omitempty"`   // Optional. Qty increase per step-up (Max 999999)
+	StepUpAmount float64 `json:"step_up_amount,omitempty"` // Optional. Amount increase per step-up
+	ExpQty       int     `json:"exp_qty,omitempty"`       // Optional. Qty for expiry/final SIP order (Max 999999)
+	Side         int     `json:"side,omitempty"`         // Optional. 1=Buy, -1=Sell (not in spec; kept for compatibility)
+	Type         int     `json:"type,omitempty"`
+	LimitPrice   float64 `json:"limitPrice,omitempty"`
+	StopPrice    float64 `json:"stopPrice,omitempty"`
+	Validity     string  `json:"validity,omitempty"`
+	DisclosedQty int     `json:"disclosedQty,omitempty"`
+	OfflineOrder bool    `json:"offlineOrder,omitempty"`
 }
 
 // CreateSmartOrderTrailRequest is the request body for create smart order trail.
@@ -442,13 +442,13 @@ type CreateSmartOrderTrailRequest struct {
 	OrderType    int      `json:"orderType"`             // Required. 1=Limit, 2=Market
 	StopPrice    float64  `json:"stopPrice"`             // Required. Initial stop/trigger price, > 0
 	JumpDiff     float64  `json:"jump_diff"`             // Required. Jump price — stop trails by this (Min: 0.2)
-	LimitPrice   *float64 `json:"limitPrice,omitempty"`   // Optional. Required if orderType=1. Default 0 (market)
-	TargetPrice  *float64 `json:"target_price,omitempty"` // Optional. Default 0 (no target). If set, must be > current LTP
-	Mpp          *float64 `json:"mpp,omitempty"`         // Optional. 0=no market protection. Valid: 0–3 or -1
-	Type         *int     `json:"type,omitempty"`
-	Validity     *string  `json:"validity,omitempty"`
-	DisclosedQty *int     `json:"disclosedQty,omitempty"`
-	OfflineOrder *bool    `json:"offlineOrder,omitempty"`
+	LimitPrice   float64 `json:"limitPrice,omitempty"`   // Optional. Required if orderType=1. Default 0 (market)
+	TargetPrice  float64 `json:"target_price,omitempty"` // Optional. Default 0 (no target). If set, must be > current LTP
+	Mpp          float64 `json:"mpp,omitempty"`         // Optional. 0=no market protection. Valid: 0–3 or -1
+	Type         int     `json:"type,omitempty"`
+	Validity     string  `json:"validity,omitempty"`
+	DisclosedQty int     `json:"disclosedQty,omitempty"`
+	OfflineOrder bool    `json:"offlineOrder,omitempty"`
 }
 
 // ModifySmartOrderRequest is the request body for modify smart order.
@@ -511,11 +511,11 @@ type GetSmartOrderBookFilter struct {
 // Type: 1=Only Alert (notification only), 2=Exit with Alert (immediate exit), 3=Exit with Alert + Wait for Recovery (waits waitTime then exits).
 // profitRate/lossRate range: Min -1,00,00,000, Max 1,00,00,000.
 type CreateSmartExitTriggerRequest struct {
-	Name       string   `json:"name"`                 // Required. Unique name for the trigger
-	Type       *int     `json:"type,omitempty"`       // Optional. Default 1. 1=Only Alert, 2=Exit+Alert, 3=Exit+Alert+Wait
-	ProfitRate *float64 `json:"profitRate,omitempty"` // Conditional. At least one with lossRate. Book profit (positive) or minimize loss (negative)
-	LossRate   *float64 `json:"lossRate,omitempty"`    // Conditional. At least one with profitRate. Max loss (negative) or min profit (positive)
-	WaitTime   *int     `json:"waitTime,omitempty"`    // Conditional. Required if type=3. Wait time in minutes (1–60) before exiting
+	Name       string  `json:"name"`                 // Required. Unique name for the trigger
+	Type       int     `json:"type,omitempty"`       // Optional. Default 1. 1=Only Alert, 2=Exit+Alert, 3=Exit+Alert+Wait
+	ProfitRate float64 `json:"profitRate,omitempty"` // Conditional. At least one with lossRate. Book profit (positive) or minimize loss (negative)
+	LossRate   float64 `json:"lossRate,omitempty"`   // Conditional. At least one with profitRate. Max loss (negative) or min profit (positive)
+	WaitTime   int     `json:"waitTime,omitempty"`   // Conditional. Required if type=3. Wait time in minutes (1–60) before exiting
 }
 
 // GetSmartExitTriggerFilter is optional filter for get smart exit trigger.
@@ -529,15 +529,15 @@ type GetSmartExitTriggerFilter struct {
 // Type: 1=Only Alert, 2=Exit with Alert, 3=Exit+Alert+Wait (waitTime required if type=3). waitTime: 0–60 minutes.
 // profitRate/lossRate range: Min -1,00,00,000, Max 1,00,00,000.
 type UpdateSmartExitTriggerRequest struct {
-	FlowId       string   `json:"flowId"`                 // Required. Unique identifier of the smart exit to update
-	Name         *string  `json:"name,omitempty"`          // Optional. Unique name for the trigger
-	ProfitRate   *float64 `json:"profitRate,omitempty"`    // Optional. Book profit (positive) or minimize loss (negative)
-	LossRate     *float64 `json:"lossRate,omitempty"`      // Optional. Max loss (negative) or min profit (positive)
-	Type         *int     `json:"type,omitempty"`          // Optional. Default 1. 1=Only Alert, 2=Exit+Alert, 3=Exit+Alert+Wait
-	WaitTime     *int     `json:"waitTime,omitempty"`      // Optional. Required if type=3. Minutes (0–60). Default 0
-	TriggerPrice *float64 `json:"triggerPrice,omitempty"`  // Optional (API may support)
-	StopLoss     *float64 `json:"stopLoss,omitempty"`      // Optional (API may support)
-	TakeProfit   *float64 `json:"takeProfit,omitempty"`    // Optional (API may support)
+	FlowId       string  `json:"flowId"`                 // Required. Unique identifier of the smart exit to update
+	Name         string  `json:"name,omitempty"`         // Optional. Unique name for the trigger
+	ProfitRate   float64 `json:"profitRate,omitempty"`   // Optional. Book profit (positive) or minimize loss (negative)
+	LossRate     float64 `json:"lossRate,omitempty"`     // Optional. Max loss (negative) or min profit (positive)
+	Type         int     `json:"type,omitempty"`         // Optional. Default 1. 1=Only Alert, 2=Exit+Alert, 3=Exit+Alert+Wait
+	WaitTime     int     `json:"waitTime,omitempty"`     // Optional. Required if type=3. Minutes (0–60). Default 0
+	TriggerPrice float64 `json:"triggerPrice,omitempty"`  // Optional (API may support)
+	StopLoss     float64 `json:"stopLoss,omitempty"`      // Optional (API may support)
+	TakeProfit   float64 `json:"takeProfit,omitempty"`    // Optional (API may support)
 }
 
 // Trade Operations

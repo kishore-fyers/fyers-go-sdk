@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	//fyersgosdk "fyers-go-sdk"
 	fyersws "fyers-go-sdk/websocket"
-	// fyersgosdk "fyers-go-sdk"
 	"os"
 	"os/signal"
 	"syscall"
@@ -999,7 +999,7 @@ func main() {
 		onOrderUpdates,   // Callback function to handle order events
 		onOrderGeneral,   // Callback function to handle general events
 		onOrderError,     // Callback function to handle WebSocket errors
-		nil,   // Callback function called when WebSocket connection is established
+		nil,              // Callback function called when WebSocket connection is established
 		onOrderClose,     // Callback function to handle WebSocket connection close events
 		true,             // Enable auto-reconnection to WebSocket on disconnection
 		5,                // Maximum number of reconnection attempts
@@ -1050,4 +1050,3 @@ func onOrderError(message fyersws.OrderError) {
 func onOrderClose(message fyersws.OrderClose) {
 	fmt.Printf("Response: %s\n", message)
 }
-
