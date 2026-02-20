@@ -437,16 +437,16 @@ type CreateSmartOrderTrailRequest struct {
 // Use Qty, LimitPrice, EndTime, StopPrice, Hpr, Lpr for Limit/Step/Trail flows.
 // Use Amount, SipDay, Hpr, Lpr for SIP flows.
 type ModifySmartOrderRequest struct {
-	FlowId      string   `json:"flowId"`
-	Qty         *int     `json:"qty,omitempty"`
-	LimitPrice  *float64 `json:"limitPrice,omitempty"`
-	EndTime     *int64   `json:"endTime,omitempty"`
-	StopPrice   *float64 `json:"stopPrice,omitempty"`
-	Hpr         *float64 `json:"hpr,omitempty"`
-	Lpr         *float64 `json:"lpr,omitempty"`
-	Amount      *float64 `json:"amount,omitempty"`  // SIP flow
-	SipDay      *int     `json:"sip_day,omitempty"` // SIP flow
-	ProductType *string  `json:"productType,omitempty"`
+	FlowId      string  `json:"flowId"`
+	Qty         int     `json:"qty,omitempty"`
+	LimitPrice  float64 `json:"limitPrice,omitempty"`
+	EndTime     int64   `json:"endTime,omitempty"`
+	StopPrice   float64 `json:"stopPrice,omitempty"`
+	Hpr         float64 `json:"hpr,omitempty"`
+	Lpr         float64 `json:"lpr,omitempty"`
+	Amount      float64 `json:"amount,omitempty"`  // SIP flow
+	SipDay      int     `json:"sip_day,omitempty"` // SIP flow
+	ProductType string  `json:"productType,omitempty"`
 }
 
 // FlowIdRequest is the request body for cancel/pause/resume smart order and activate/deactivate smart exit trigger.
