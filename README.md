@@ -1,11 +1,14 @@
-# Fyers Go SDK
+<a href="https://fyers.in/"><img src="https://assets.fyers.in/images/logo.svg" align="right" /></a>
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/your-username/fyersgosdk)](https://goreportcard.com/report/github.com/your-username/fyersgosdk)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/your-username/fyersgosdk)](https://golang.org/dl/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Fyers API](https://img.shields.io/badge/API-Fyers%20v3-blue.svg)](https://myapi.fyers.in/)
+# Fyers Go SDK : fyers-api-v3 - v1.0.0
 
-A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provides seamless integration with Fyers trading platform. This SDK enables you to build trading applications, algorithmic trading systems, and market data analysis tools using Go.
+The official Fyers Go SDK for API-V3 Users [FYERS API](https://fyers.in/products/api/).
+
+Fyers API is a set of REST-like APIs that provide integration with our in-house trading platform with which you can build your own customized trading applications.
+
+## Documentation
+
+- [Fyers API documentation](https://myapi.fyers.in/docsv3)
 
 ## 🚀 Features
 
@@ -22,6 +25,7 @@ A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provide
 
 ## 📋 Table of Contents
 
+- [Compatible Go Versions](#compatible-go-versions)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Authentication](#authentication)
@@ -31,6 +35,13 @@ A comprehensive Go SDK for the [Fyers API](https://myapi.fyers.in/) that provide
 - [Error Handling](#error-handling)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Compatible Go Versions
+
+- **Minimum:** Go **1.18** (required by `go.mod`).
+- **Compatible:** Go 1.18 and any later release (1.19, 1.20, 1.21, 1.22, 1.23, etc.).
+
+Using Go 1.19 or newer is recommended for security and tooling support.
 
 ## 📦 Installation
 

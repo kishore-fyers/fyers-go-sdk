@@ -682,24 +682,24 @@ import (
 //   }
 
 // Modify Smart Order
-func main() {
-	appId := "AAAAAAAAA-100"
-	accessToken := "eyjb...."
-	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	accessToken := "eyjb...."
+// 	fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
 
-	// Use flowId of an active smart order. Send only fields that apply to the flow type.
-	response, err := fyModel.ModifySmartOrder(fyersgosdk.ModifySmartOrderRequest{
-		FlowId:     "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
-		Qty:        10,
-		LimitPrice: 31,
-		EndTime:    1769766253,
-	})
-	if err != nil {
-		fmt.Printf("Error modify smart order: %v\n", err)
-	} else {
-		fmt.Println("ModifySmartOrder:", response)
-	}
-}
+// 	// Use flowId of an active smart order. Send only fields that apply to the flow type.
+// 	response, err := fyModel.ModifySmartOrder(fyersgosdk.ModifySmartOrderRequest{
+// 		FlowId:     "88fc8b7b-b582-4f0d-b1c7-6cc072525e7a",
+// 		Qty:        10,
+// 		LimitPrice: 31,
+// 		EndTime:    1769766253,
+// 	})
+// 	if err != nil {
+// 		fmt.Printf("Error modify smart order: %v\n", err)
+// 	} else {
+// 		fmt.Println("ModifySmartOrder:", response)
+// 	}
+// }
 
 // // Cancel Smart Order
 // func main() {
