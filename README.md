@@ -351,6 +351,22 @@ All runnable examples live in **[examples/fyers/fyers.go](examples/fyers/fyers.g
 - **GTT Cancel / CancelGTT** – `CancelGTTOrder`
 - **GTT Get Order Book** – `GetGTTOrderBook`
 
+### Smart Order
+- **Smart Limit** – `CreateSmartOrderLimit`
+- **Smart Trail** – `CreateSmartOrderTrail`
+- **Smart Step** – `CreateSmartOrderStep`
+- **Modify Smart Order** – `ModifySmartOrder`
+- **Cancel Smart Order** – `CancelSmartOrder`
+- **Pause Smart Order** – `PauseSmartOrder`
+- **Resume Smart Order** – `ResumeSmartOrder`
+- **Smart Order Book** – `GetSmartOrderBookWithFilter`
+
+### Smart Exit
+- **Create Smart Exit** – `CreateSmartExitTrigger`
+- **Get Smart Exit** – `GetSmartExitTrigger`
+- **Update Smart Exit** – `UpdateSmartExitTrigger`
+- **Activate/Deactivate Smart Exit** – `ActivateDeactivateSmartExitTrigger`
+
 ### Trade Operations / Positions
 - **Exit Order** – `ExitPosition`
 - **Exit Position By Id** – `ExitPositionById`
@@ -358,10 +374,16 @@ All runnable examples live in **[examples/fyers/fyers.go](examples/fyers/fyers.g
 - **Pending Order Cancel** – `CancelPendingOrders`
 - **Convert Position** – `ConvertPosition`
 
+### Alerts
+- **Create Price Alert** – `CreateAlert`
+- **Get Price Alerts** – `GetAlerts`
+- **Modify Price Alert** – `UpdateAlert`
+- **Delete Price Alert** – `DeleteAlert`
+- **Enable/Disable Price Alert** – `ToggleAlert`
+
 ### Market Data & Broker
 - **Market Status** – `GetMarketStatus`
 - **Quotes** – `GetStockQuotes`
 - **Market depth** – `GetMarketDepth`
 - **Option Chain** – `GetOptionChain`
-
-For **Get History**, use `GetHistory(HistoryRequest{...})` as in the API Reference above.
+- **Get History** – `GetHistory`

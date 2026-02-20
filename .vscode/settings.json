@@ -1,0 +1,7 @@
+{
+  "go.diagnostic.vulncheck": "Off",
+  "spellright.language": [],
+  "spellright.documentTypes": [
+    "latex"
+  ]
+}

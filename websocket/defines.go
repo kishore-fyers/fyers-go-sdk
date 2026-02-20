@@ -1,8 +1,6 @@
 package fyersgosdk
 
-// Constants for message types and status codes
 const (
-	// Error codes
 	AUTH_ERROR_CODE    = 11001
 	SUBS_ERROR_CODE    = 11011
 	UNSUBS_ERROR_CODE  = 11012
@@ -14,7 +12,6 @@ const (
 	TOKEN_EXPIRED      = -99
 	LIMIT_EXCEED_CODE  = -99
 
-	// Messages
 	LIMIT_EXCEED_MSG_5000          = "Please provide less than 5000 symbols"
 	TOKEN_EXPIRED_MSG              = "Token is expired"
 	INVALID_TOKEN                  = "Please provide valid token"
@@ -37,7 +34,6 @@ const (
 	MAX_RECONNECT_ATTEMPTS_REACHED = "Max reconnect attempts reached"
 	INDEX_DEPTH_ERROR_MESSAGE      = "Index does not have market depth"
 
-	// Message types
 	AUTH_TYPE      = "cn"
 	SUBS_TYPE      = "sub"
 	UNSUBS_TYPE    = "unsub"

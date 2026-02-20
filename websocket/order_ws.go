@@ -13,10 +13,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// OrderMessage wraps order/trade/position/general payloads for order socket callbacks. Implements fmt.Stringer for JSON output.
 type OrderMessage map[string]interface{}
 
-// String returns the message as JSON.
 func (o OrderMessage) String() string {
 	b, err := json.Marshal(map[string]interface{}(o))
 	if err != nil {
@@ -25,10 +23,8 @@ func (o OrderMessage) String() string {
 	return string(b)
 }
 
-// OrderError wraps the error payload for order socket OnError. Implements fmt.Stringer for JSON output.
 type OrderError map[string]interface{}
 
-// String returns the error as JSON.
 func (o OrderError) String() string {
 	b, err := json.Marshal(map[string]interface{}(o))
 	if err != nil {
@@ -37,10 +33,8 @@ func (o OrderError) String() string {
 	return string(b)
 }
 
-// OrderClose wraps the close payload for order socket OnClose. Implements fmt.Stringer for JSON output.
 type OrderClose map[string]interface{}
 
-// String returns the close message as JSON.
 func (o OrderClose) String() string {
 	b, err := json.Marshal(map[string]interface{}(o))
 	if err != nil {
@@ -49,7 +43,6 @@ func (o OrderClose) String() string {
 	return string(b)
 }
 
-// FyersOrderSocket represents the order WebSocket client
 type FyersOrderSocket struct {
 	accessToken          string
 	logPath              string
@@ -82,7 +75,6 @@ type FyersOrderSocket struct {
 	stopChan             chan bool
 }
 
-// NewFyersOrderSocket creates a new FyersOrderSocket instance
 func NewFyersOrderSocket(
 	accessToken string,
 	writeToFile bool,
@@ -103,7 +95,6 @@ func NewFyersOrderSocket(
 		maxReconnectAttempts = reconnectRetry
 	}
 
-	// Load map.json
 	mapData, err := loadMapJSON()
 	if err != nil {
 		fmt.Printf("Failed to load map.json: %v\n", err)
@@ -125,12 +116,11 @@ func NewFyersOrderSocket(
 		}
 	}
 
-	// Setup logger
 	var loggerPath string
 	if logPath != "" {
-		loggerPath = logPath // Use the logPath as is (it's already a directory)
+		loggerPath = logPath
 	} else {
-		loggerPath = "" // Empty string means no logging to file
+		loggerPath = ""
 	}
 
 	orderLogger := NewFyersLogger("FyersOrderSocket", "DEBUG", 2, loggerPath)
@@ -174,9 +164,7 @@ func NewFyersOrderSocket(
 	}
 }
 
-// loadMapJSON loads the map.json file
 func loadMapJSON() (map[string]interface{}, error) {
-	// Get the directory of the current file
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		return nil, fmt.Errorf("failed to get current file path")
@@ -199,13 +187,11 @@ func loadMapJSON() (map[string]interface{}, error) {
 	return mapData, nil
 }
 
-// parsePositionData parses position data from a message
 func (f *FyersOrderSocket) parsePositionData(msg map[string]interface{}) map[string]interface{} {
 	positionData := make(map[string]interface{})
 
 	if positions, exists := msg["positions"]; exists {
 		if posMap, ok := positions.(map[string]interface{}); ok {
-			// Use the position mapper to convert field names like Python version
 			for rawKey, mappedKey := range f.positionMapper {
 				if val, exists := posMap[rawKey]; exists {
 					positionData[mappedKey.(string)] = val
@@ -220,13 +206,11 @@ func (f *FyersOrderSocket) parsePositionData(msg map[string]interface{}) map[str
 	}
 }
 
-// parseTradeData parses trade data from a message
 func (f *FyersOrderSocket) parseTradeData(msg map[string]interface{}) map[string]interface{} {
 	tradeData := make(map[string]interface{})
 
 	if trades, exists := msg["trades"]; exists {
 		if trdMap, ok := trades.(map[string]interface{}); ok {
-			// Use the trade mapper to convert field names like Python version
 			for rawKey, mappedKey := range f.tradeMapper {
 				if val, exists := trdMap[rawKey]; exists {
 					tradeData[mappedKey.(string)] = val
@@ -241,20 +225,17 @@ func (f *FyersOrderSocket) parseTradeData(msg map[string]interface{}) map[string
 	}
 }
 
-// parseOrderData parses order data from a message
 func (f *FyersOrderSocket) parseOrderData(msg map[string]interface{}) map[string]interface{} {
 	orderData := make(map[string]interface{})
 
 	if orders, exists := msg["orders"]; exists {
 		if ordMap, ok := orders.(map[string]interface{}); ok {
-			// Use the order mapper to convert field names like Python version
 			for rawKey, mappedKey := range f.orderMapper {
 				if val, exists := ordMap[rawKey]; exists {
 					orderData[mappedKey.(string)] = val
 				}
 			}
 
-			// Add orderNumStatus like Python version
 			if id, exists := ordMap["id"]; exists {
 				if orgOrdStatus, exists := ordMap["org_ord_status"]; exists {
 					orderData["orderNumStatus"] = fmt.Sprintf("%v:%v", id, orgOrdStatus)
@@ -269,7 +250,6 @@ func (f *FyersOrderSocket) parseOrderData(msg map[string]interface{}) map[string
 	}
 }
 
-// OnTrades handles trade events
 func (f *FyersOrderSocket) OnTrades(message map[string]interface{}) {
 	if f.onTrades != nil {
 		f.onTrades(OrderMessage(message))
@@ -278,7 +258,6 @@ func (f *FyersOrderSocket) OnTrades(message map[string]interface{}) {
 	}
 }
 
-// OnPositions handles position events
 func (f *FyersOrderSocket) OnPositions(message map[string]interface{}) {
 	if f.onPosition != nil {
 		f.onPosition(OrderMessage(message))
@@ -287,7 +266,6 @@ func (f *FyersOrderSocket) OnPositions(message map[string]interface{}) {
 	}
 }
 
-// OnOrder handles order events
 func (f *FyersOrderSocket) OnOrder(message map[string]interface{}) {
 	if f.onOrder != nil {
 		f.onOrder(OrderMessage(message))
@@ -296,7 +274,6 @@ func (f *FyersOrderSocket) OnOrder(message map[string]interface{}) {
 	}
 }
 
-// OnGeneral handles general events
 func (f *FyersOrderSocket) OnGeneral(message map[string]interface{}) {
 	if f.onGeneral != nil {
 		f.onGeneral(OrderMessage(message))
@@ -305,7 +282,6 @@ func (f *FyersOrderSocket) OnGeneral(message map[string]interface{}) {
 	}
 }
 
-// OnError handles error events
 func (f *FyersOrderSocket) OnError(message interface{}) {
 	if f.onError != nil {
 		f.onError(OrderError{"error": message})
@@ -314,12 +290,9 @@ func (f *FyersOrderSocket) OnError(message interface{}) {
 	}
 }
 
-// handleMessage processes incoming messages
 func (f *FyersOrderSocket) handleMessage(message []byte) {
-	// Convert message to string first
 	messageStr := string(message)
 
-	// Handle pong messages like Python version
 	if messageStr == "pong" {
 		return
 	}
@@ -331,7 +304,6 @@ func (f *FyersOrderSocket) handleMessage(message []byte) {
 		return
 	}
 
-	// Use field-based parsing like Python version
 	if _, exists := data["orders"]; exists {
 		parsedData := f.parseOrderData(data)
 		f.OnOrder(parsedData)
@@ -346,7 +318,6 @@ func (f *FyersOrderSocket) handleMessage(message []byte) {
 	}
 }
 
-// readMessages reads messages from WebSocket
 func (f *FyersOrderSocket) readMessages() {
 	for {
 		select {
@@ -359,11 +330,9 @@ func (f *FyersOrderSocket) readMessages() {
 
 			_, message, err := f.wsObject.ReadMessage()
 			if err != nil {
-				// Check if this is a normal close error
 				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 					f.OnError(err.Error())
 				} else {
-					// Normal close, just log it
 					f.orderLogger.Info("WebSocket connection closed normally")
 				}
 				return
@@ -374,7 +343,6 @@ func (f *FyersOrderSocket) readMessages() {
 	}
 }
 
-// ping sends periodic ping messages
 func (f *FyersOrderSocket) ping() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -387,7 +355,6 @@ func (f *FyersOrderSocket) ping() {
 				err := f.wsObject.WriteMessage(websocket.TextMessage, []byte("ping"))
 				if err != nil {
 					f.orderLogger.Error("Failed to send ping: " + err.Error())
-					// Don't call OnError for ping failures as they're not critical
 				}
 			}
 			f.mu.Unlock()
@@ -397,12 +364,10 @@ func (f *FyersOrderSocket) ping() {
 	}
 }
 
-// Connect establishes WebSocket connection
 func (f *FyersOrderSocket) Connect() error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	// Set up headers with authorization
 	headers := http.Header{}
 	headers.Set("authorization", f.accessToken)
 
@@ -416,7 +381,6 @@ func (f *FyersOrderSocket) Connect() error {
 	f.connected = true
 	f.wsRun = true
 
-	// Display authentication success message
 	authResponse := map[string]interface{}{
 		"type":    AUTH_TYPE,
 		"code":    200,
@@ -426,13 +390,10 @@ func (f *FyersOrderSocket) Connect() error {
 	jsonData, _ := json.Marshal(authResponse)
 	fmt.Printf("Response: %s\n", string(jsonData))
 
-	// Start reading messages
 	go f.readMessages()
 
-	// Start ping thread
 	go f.ping()
 
-	// Call onOpen callback
 	if f.onOpen != nil {
 		f.onOpen()
 	}
@@ -440,9 +401,6 @@ func (f *FyersOrderSocket) Connect() error {
 	return nil
 }
 
-// socketTypeToSlist converts one or more socket type keys (e.g. "OnOrders", "OnTrades")
-// into a single SLIST slice, matching Python's logic: comma-separated or multiple keys
-// map to one list; list values (e.g. OnGeneral) are expanded.
 func (f *FyersOrderSocket) socketTypeToSlist(dataTypes []string) []string {
 	var dataTypeList []string
 	for _, dataType := range dataTypes {
@@ -457,14 +415,10 @@ func (f *FyersOrderSocket) socketTypeToSlist(dataTypes []string) []string {
 	return dataTypeList
 }
 
-// Subscribe subscribes to a single data type.
 func (f *FyersOrderSocket) Subscribe(dataType string) {
 	f.SubscribeMultiple([]string{dataType})
 }
 
-// SubscribeMultiple subscribes to multiple data types in one SUB_ORD message (like Python:
-// one message with SLIST e.g. ["orders","trades","positions"] so the server returns one
-// "Successfully subscribed" instead of one per type).
 func (f *FyersOrderSocket) SubscribeMultiple(dataTypes []string) {
 	dataTypeList := f.socketTypeToSlist(dataTypes)
 	if len(dataTypeList) == 0 {
@@ -486,12 +440,10 @@ func (f *FyersOrderSocket) SubscribeMultiple(dataTypes []string) {
 	}
 }
 
-// Unsubscribe unsubscribes from a single data type.
 func (f *FyersOrderSocket) Unsubscribe(dataType string) {
 	f.UnsubscribeMultiple([]string{dataType})
 }
 
-// UnsubscribeMultiple unsubscribes from multiple data types in one SUB_ORD message.
 func (f *FyersOrderSocket) UnsubscribeMultiple(dataTypes []string) {
 	dataTypeList := f.socketTypeToSlist(dataTypes)
 	if len(dataTypeList) == 0 {
@@ -513,17 +465,14 @@ func (f *FyersOrderSocket) UnsubscribeMultiple(dataTypes []string) {
 	}
 }
 
-// KeepRunning keeps the WebSocket connection alive
 func (f *FyersOrderSocket) KeepRunning() {
 	select {}
 }
 
-// StopRunning stops the WebSocket connection
 func (f *FyersOrderSocket) StopRunning() {
 	f.CloseConnection()
 }
 
-// CloseConnection closes the WebSocket connection
 func (f *FyersOrderSocket) CloseConnection() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -536,10 +485,8 @@ func (f *FyersOrderSocket) CloseConnection() {
 	f.connected = false
 	f.wsRun = false
 
-	// Only close stopChan if it hasn't been closed already
 	select {
 	case <-f.stopChan:
-		// Channel already closed, do nothing
 	default:
 		close(f.stopChan)
 	}
@@ -549,7 +496,6 @@ func (f *FyersOrderSocket) CloseConnection() {
 	}
 }
 
-// IsConnected returns the connection status
 func (f *FyersOrderSocket) IsConnected() bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()

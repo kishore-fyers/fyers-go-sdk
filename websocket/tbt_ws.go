@@ -11,14 +11,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// SubscriptionModes represents the subscription modes
 type SubscriptionModes string
 
 const (
 	DEPTH SubscriptionModes = "depth"
 )
 
-// Depth represents depth data structure
 type Depth struct {
 	Tbq       int       `json:"tbq"`
 	Tsq       int       `json:"tsq"`
@@ -34,7 +32,6 @@ type Depth struct {
 	SeqNo     int64     `json:"seqNo"`
 }
 
-// NewDepth creates a new Depth instance
 func NewDepth() *Depth {
 	return &Depth{
 		Tbq:       0,
@@ -52,13 +49,11 @@ func NewDepth() *Depth {
 	}
 }
 
-// String returns string representation of Depth
 func (d *Depth) String() string {
 	return fmt.Sprintf("Depth{ts: %d, send_ts: %d, tbq: %d, tsq: %d, bidprice: %v, askprice: %v, bidqty: %v, askqty: %v, bidordn: %v, askordn: %v, snapshot: %t, sNo: %d}",
 		d.Timestamp, d.SendTime, d.Tbq, d.Tsq, d.BidPrice, d.AskPrice, d.BidQty, d.AskQty, d.BidOrdn, d.AskOrdn, d.Snapshot, d.SeqNo)
 }
 
-// SubscriptionInfo manages subscription information
 type SubscriptionInfo struct {
 	symbols        map[string]map[string]bool
 	modeInfo       map[string]SubscriptionModes
@@ -66,7 +61,6 @@ type SubscriptionInfo struct {
 	mu             sync.RWMutex
 }
 
-// NewSubscriptionInfo creates a new SubscriptionInfo instance
 func NewSubscriptionInfo() *SubscriptionInfo {
 	return &SubscriptionInfo{
 		symbols:        make(map[string]map[string]bool),
@@ -75,7 +69,6 @@ func NewSubscriptionInfo() *SubscriptionInfo {
 	}
 }
 
-// Subscribe subscribes to symbols
 func (si *SubscriptionInfo) Subscribe(symbols map[string]bool, channelNo string, mode SubscriptionModes) {
 	si.mu.Lock()
 	defer si.mu.Unlock()
@@ -93,7 +86,6 @@ func (si *SubscriptionInfo) Subscribe(symbols map[string]bool, channelNo string,
 	si.modeInfo[channelNo] = mode
 }
 
-// Unsubscribe unsubscribes from symbols
 func (si *SubscriptionInfo) Unsubscribe(symbols map[string]bool, channelNo string) {
 	si.mu.Lock()
 	defer si.mu.Unlock()
@@ -108,7 +100,6 @@ func (si *SubscriptionInfo) Unsubscribe(symbols map[string]bool, channelNo strin
 	}
 }
 
-// UpdateChannels updates channel status
 func (si *SubscriptionInfo) UpdateChannels(pauseChannels, resumeChannels map[string]bool) {
 	si.mu.Lock()
 	defer si.mu.Unlock()
@@ -121,7 +112,6 @@ func (si *SubscriptionInfo) UpdateChannels(pauseChannels, resumeChannels map[str
 	}
 }
 
-// GetSymbolsInfo returns symbols for a channel
 func (si *SubscriptionInfo) GetSymbolsInfo(chanNo string) map[string]bool {
 	si.mu.RLock()
 	defer si.mu.RUnlock()
@@ -136,7 +126,6 @@ func (si *SubscriptionInfo) GetSymbolsInfo(chanNo string) map[string]bool {
 	return make(map[string]bool)
 }
 
-// GetModeInfo returns mode for a channel
 func (si *SubscriptionInfo) GetModeInfo(chanNo string) SubscriptionModes {
 	si.mu.RLock()
 	defer si.mu.RUnlock()
@@ -147,7 +136,6 @@ func (si *SubscriptionInfo) GetModeInfo(chanNo string) SubscriptionModes {
 	return DEPTH
 }
 
-// GetChannelInfo returns active channels
 func (si *SubscriptionInfo) GetChannelInfo() map[string]bool {
 	si.mu.RLock()
 	defer si.mu.RUnlock()
@@ -159,20 +147,17 @@ func (si *SubscriptionInfo) GetChannelInfo() map[string]bool {
 	return result
 }
 
-// DataStore manages data storage
 type DataStore struct {
 	depth map[string]*Depth
 	mu    sync.RWMutex
 }
 
-// NewDataStore creates a new DataStore instance
 func NewDataStore() *DataStore {
 	return &DataStore{
 		depth: make(map[string]*Depth),
 	}
 }
 
-// UpdateDepth updates depth data
 func (ds *DataStore) UpdateDepth(packet map[string]interface{}, cb func(string, *Depth), diffOnly bool) {
 	if feeds, exists := packet["feeds"]; exists {
 		if feedsMap, ok := feeds.(map[string]interface{}); ok {
@@ -188,13 +173,13 @@ func (ds *DataStore) UpdateDepth(packet map[string]interface{}, cb func(string, 
 						ds.mu.Unlock()
 
 						if !diffOnly {
-							// Update existing depth
+
 							ds.mu.Lock()
 							ds.updateDepthFromFeed(ds.depth[symbol], feed, packet["snapshot"].(bool))
 							ds.mu.Unlock()
 							cb(symbol, ds.depth[symbol])
 						} else {
-							// Create new depth for diff
+
 							depth := NewDepth()
 							ds.updateDepthFromFeed(depth, feed, packet["snapshot"].(bool))
 							cb(symbol, depth)
@@ -206,7 +191,6 @@ func (ds *DataStore) UpdateDepth(packet map[string]interface{}, cb func(string, 
 	}
 }
 
-// updateDepthFromFeed updates depth from feed data
 func (ds *DataStore) updateDepthFromFeed(depth *Depth, feed map[string]interface{}, isSnapshot bool) {
 	depth.Snapshot = isSnapshot
 
@@ -228,7 +212,6 @@ func (ds *DataStore) updateDepthFromFeed(depth *Depth, feed map[string]interface
 				}
 			}
 
-			// Update asks
 			if asks, exists := depthMap["asks"]; exists {
 				if asksArray, ok := asks.([]interface{}); ok {
 					for i, ask := range asksArray {
@@ -262,7 +245,6 @@ func (ds *DataStore) updateDepthFromFeed(depth *Depth, feed map[string]interface
 				}
 			}
 
-			// Update bids
 			if bids, exists := depthMap["bids"]; exists {
 				if bidsArray, ok := bids.([]interface{}); ok {
 					for i, bid := range bidsArray {
@@ -319,7 +301,6 @@ func (ds *DataStore) updateDepthFromFeed(depth *Depth, feed map[string]interface
 	}
 }
 
-// getURL gets the WebSocket URL
 func getURL(accessToken string) string {
 	req, err := http.NewRequest("GET", "https://api-t1.fyers.in/indus/home/tbtws", nil)
 	if err != nil {
@@ -357,7 +338,6 @@ func getURL(accessToken string) string {
 	return "wss://rtsocket-api.fyers.in/versova"
 }
 
-// FyersTbtSocket represents the TBT WebSocket client
 type FyersTbtSocket struct {
 	datastore            *DataStore
 	subsInfo             *SubscriptionInfo
@@ -385,7 +365,6 @@ type FyersTbtSocket struct {
 	stopChan             chan bool
 }
 
-// NewFyersTbtSocket creates a new FyersTbtSocket instance
 func NewFyersTbtSocket(
 	accessToken string,
 	writeToFile bool,
@@ -406,7 +385,6 @@ func NewFyersTbtSocket(
 		maxReconnectAttempts = reconnectRetry
 	}
 
-	// Setup logger
 	var loggerPath string
 	if logPath != "" {
 		loggerPath = logPath + "/fyersTbtSocket.log"
@@ -443,7 +421,6 @@ func NewFyersTbtSocket(
 	}
 }
 
-// Subscribe subscribes to symbols
 func (f *FyersTbtSocket) Subscribe(symbolTickers map[string]bool, channelNo string, mode SubscriptionModes) {
 	f.subsInfo.Subscribe(symbolTickers, channelNo, mode)
 
@@ -463,7 +440,6 @@ func (f *FyersTbtSocket) Subscribe(symbolTickers map[string]bool, channelNo stri
 	}
 }
 
-// Unsubscribe unsubscribes from symbols
 func (f *FyersTbtSocket) Unsubscribe(symbolTickers map[string]bool, channelNo string, mode SubscriptionModes) {
 	f.subsInfo.Unsubscribe(symbolTickers, channelNo)
 
@@ -483,7 +459,6 @@ func (f *FyersTbtSocket) Unsubscribe(symbolTickers map[string]bool, channelNo st
 	}
 }
 
-// SwitchChannel switches channels
 func (f *FyersTbtSocket) SwitchChannel(resumeChannels, pauseChannels map[string]bool) {
 	f.subsInfo.UpdateChannels(pauseChannels, resumeChannels)
 
@@ -502,7 +477,6 @@ func (f *FyersTbtSocket) SwitchChannel(resumeChannels, pauseChannels map[string]
 	}
 }
 
-// OnDepthUpdate handles depth updates
 func (f *FyersTbtSocket) OnDepthUpdate(ticker string, message *Depth) {
 	if f.onDepthUpdate != nil {
 		f.onDepthUpdate(ticker, message)
@@ -511,7 +485,6 @@ func (f *FyersTbtSocket) OnDepthUpdate(ticker string, message *Depth) {
 	}
 }
 
-// OnErrorMessage handles error messages
 func (f *FyersTbtSocket) OnErrorMessage(message string) {
 	if f.onErrorMsg != nil {
 		f.onErrorMsg(message)
@@ -520,7 +493,6 @@ func (f *FyersTbtSocket) OnErrorMessage(message string) {
 	}
 }
 
-// OnError handles errors
 func (f *FyersTbtSocket) OnError(message interface{}) {
 	if f.onError != nil {
 		f.onError(map[string]interface{}{"error": message})
@@ -529,7 +501,6 @@ func (f *FyersTbtSocket) OnError(message interface{}) {
 	}
 }
 
-// handleMessage processes incoming messages
 func (f *FyersTbtSocket) handleMessage(message []byte) {
 	var data map[string]interface{}
 	err := json.Unmarshal(message, &data)
@@ -552,7 +523,6 @@ func (f *FyersTbtSocket) handleMessage(message []byte) {
 	}
 }
 
-// readMessages reads messages from WebSocket
 func (f *FyersTbtSocket) readMessages() {
 	for {
 		select {
@@ -574,7 +544,6 @@ func (f *FyersTbtSocket) readMessages() {
 	}
 }
 
-// ping sends periodic ping messages
 func (f *FyersTbtSocket) ping() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -594,7 +563,6 @@ func (f *FyersTbtSocket) ping() {
 	}
 }
 
-// Connect establishes WebSocket connection
 func (f *FyersTbtSocket) Connect() error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -610,13 +578,10 @@ func (f *FyersTbtSocket) Connect() error {
 	f.connected = true
 	f.wsRun = true
 
-	// Start reading messages
 	go f.readMessages()
 
-	// Start ping thread
 	go f.ping()
 
-	// Call onOpen callback
 	if f.onOpen != nil {
 		f.onOpen()
 	}
@@ -624,17 +589,14 @@ func (f *FyersTbtSocket) Connect() error {
 	return nil
 }
 
-// KeepRunning keeps the WebSocket connection alive
 func (f *FyersTbtSocket) KeepRunning() {
 	select {}
 }
 
-// StopRunning stops the WebSocket connection
 func (f *FyersTbtSocket) StopRunning() {
 	f.CloseConnection()
 }
 
-// CloseConnection closes the WebSocket connection
 func (f *FyersTbtSocket) CloseConnection() {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -653,7 +615,6 @@ func (f *FyersTbtSocket) CloseConnection() {
 	}
 }
 
-// IsConnected returns the connection status
 func (f *FyersTbtSocket) IsConnected() bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()

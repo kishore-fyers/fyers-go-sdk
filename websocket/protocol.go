@@ -21,14 +21,13 @@ type HsmProtocol struct {
 	Mode     string `json:"mode"`
 	Protocol string `json:"protocol"`
 	Version  string `json:"version"`
-	Type     string `json:"type"` //subscribe, unsubscribe, sendMessage,litemode,full
+	Type     string `json:"type"`
 }
 
 type HsmProtocolV2 struct {
-	Type string `json:"type"` //subscribe, unsubscribe, sendMessage,litemode,full
+	Type string `json:"type"`
 }
 
-// symbolConversion handles symbol to HSM token conversion
 type symbolConversion struct {
 	dataType        string
 	accessToken     string
@@ -37,7 +36,6 @@ type symbolConversion struct {
 	dataLogger      *FyersLogger
 }
 
-// newSymbolConversion creates a new SymbolConversion instance
 func newSymbolConversion(accessToken, dataType, logPath string) *symbolConversion {
 	if strings.Contains(accessToken, ":") {
 		parts := strings.Split(accessToken, ":")
@@ -61,7 +59,6 @@ func newSymbolConversion(accessToken, dataType, logPath string) *symbolConversio
 	}
 }
 
-// symbolToHSMToken converts symbols to HSM tokens
 func (sc *symbolConversion) symbolToHSMToken(symbols []string) (map[string]string, []string, bool, string) {
 	data := map[string]interface{}{
 		"symbols": symbols,
@@ -102,7 +99,6 @@ func (sc *symbolConversion) symbolToHSMToken(symbols []string) (map[string]strin
 		return nil, nil, false, ""
 	}
 
-	// Load map.json
 	mapData, err := sc.loadMapJSON()
 	if err != nil {
 		sc.dataLogger.Exception(err)
@@ -181,9 +177,7 @@ func (sc *symbolConversion) symbolToHSMToken(symbols []string) (map[string]strin
 	return nil, nil, false, ""
 }
 
-// loadMapJSON loads the map.json file
 func (sc *symbolConversion) loadMapJSON() (map[string]interface{}, error) {
-	// Get the directory of the current file
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		return nil, fmt.Errorf("failed to get current file path")
