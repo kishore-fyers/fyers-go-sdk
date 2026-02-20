@@ -134,7 +134,7 @@ fmt.Println("Please visit:", loginURL)
 // Step 4: Exchange auth code for access token (returns JSON string)
 response, err := fyClient.GenerateAccessToken(authCode, fyClient)
 
-// Step 5: Or refresh token with PIN
+// Step 5: Exchange refresh token for access token
 response, err := fyClient.GenerateAccessTokenFromRefreshToken(refreshToken, pin, fyClient)
 
 // Step 6: Create FyersModel for all API calls

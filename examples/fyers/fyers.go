@@ -1,28 +1,24 @@
 package main
 
 import (
+	// "fmt"
 	"fmt"
-	//fyersgosdk "fyers-go-sdk"
-	fyersws "fyers-go-sdk/websocket"
-	"os"
-	"os/signal"
-	"syscall"
+	fyersgosdk "fyers-go-sdk"
+	// fyersws "fyers-go-sdk/websocket"
+	// "os"
+	// "os/signal"
+	// "syscall"
 )
 
-// import (
-// 	"fmt"
-// 	fyersgosdk "fyers-go-sdk"
-// )
-
 // Get Auth Code URL
-// func main() {
-// 	appId := "M0R4WW1PYU-100"
-// 	appSecret := "XKCP7PAISD"
-// 	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
+func main() {
+	appId := "M0R4WW1PYU-100"
+	appSecret := "XKCP7PAISD"
+	redirectUrl := "https://trade.fyers.in/api-login/redirect-uri/index.html"
 
-// 	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-// 	fmt.Println(fyClient.GetLoginURL())
-// }
+	fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
+	fmt.Println(fyClient.GetLoginURL())
+}
 
 // Generate Access Token
 // func main() {
@@ -983,69 +979,69 @@ import (
 // 	fmt.Printf("Connection closed: %s\n", message)
 // }
 
-func main() {
-	appId := "AAAAAAAAA-100"
-	token := "eyjb...."
-	accessToken := fmt.Sprintf("%s:%s", appId, token)
-	tradeOperations := []string{"OnOrders", "OnTrades", "OnPositions"}
+// func main() {
+// 	appId := "AAAAAAAAA-100"
+// 	token := "eyjb...."
+// 	accessToken := fmt.Sprintf("%s:%s", appId, token)
+// 	tradeOperations := []string{"OnOrders", "OnTrades", "OnPositions"}
 
-	orderSocket := fyersws.NewFyersOrderSocket(
-		accessToken,      // Access token in the format "appid:accesstoken"
-		false,            // Write to file - set to true if you want to save responses to a log file
-		"",               // Log path - leave empty to auto-create logs in the current directory
-		onOrderTrades,    // Callback function to handle trade events
-		onOrderPositions, // Callback function to handle position events
-		onOrderUpdates,   // Callback function to handle order events
-		onOrderGeneral,   // Callback function to handle general events
-		onOrderError,     // Callback function to handle WebSocket errors
-		nil,              // Callback function called when WebSocket connection is established
-		onOrderClose,     // Callback function to handle WebSocket connection close events
-		true,             // Enable auto-reconnection to WebSocket on disconnection
-		5,                // Maximum number of reconnection attempts
-	)
+// 	orderSocket := fyersws.NewFyersOrderSocket(
+// 		accessToken,      // Access token in the format "appid:accesstoken"
+// 		false,            // Write to file - set to true if you want to save responses to a log file
+// 		"",               // Log path - leave empty to auto-create logs in the current directory
+// 		onOrderTrades,    // Callback function to handle trade events
+// 		onOrderPositions, // Callback function to handle position events
+// 		onOrderUpdates,   // Callback function to handle order events
+// 		onOrderGeneral,   // Callback function to handle general events
+// 		onOrderError,     // Callback function to handle WebSocket errors
+// 		nil,              // Callback function called when WebSocket connection is established
+// 		onOrderClose,     // Callback function to handle WebSocket connection close events
+// 		true,             // Enable auto-reconnection to WebSocket on disconnection
+// 		5,                // Maximum number of reconnection attempts
+// 	)
 
-	// Establish a connection to the Fyers Order WebSocket
-	err := orderSocket.Connect()
-	if err != nil {
-		fmt.Printf("failed to connect to Order Socket: %v", err)
-		return
-	}
+// 	// Establish a connection to the Fyers Order WebSocket
+// 	err := orderSocket.Connect()
+// 	if err != nil {
+// 		fmt.Printf("failed to connect to Order Socket: %v", err)
+// 		return
+// 	}
 
-	if len(tradeOperations) > 0 {
-		orderSocket.SubscribeMultiple(tradeOperations)
-	}
+// 	if len(tradeOperations) > 0 {
+// 		orderSocket.SubscribeMultiple(tradeOperations)
+// 	}
 
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+// 	sigChan := make(chan os.Signal, 1)
+// 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	<-sigChan
-	fmt.Println("\nReceived interrupt signal, closing connection...")
+// 	<-sigChan
+// 	fmt.Println("\nReceived interrupt signal, closing connection...")
 
-	orderSocket.CloseConnection()
-	fmt.Println("Order Socket connection closed")
-}
+// 	orderSocket.CloseConnection()
+// 	fmt.Println("Order Socket connection closed")
+// }
 
-// Order Socket callback functions
-func onOrderTrades(message fyersws.OrderMessage) {
-	fmt.Printf("Trade Response: %s\n", message)
-}
+// // Order Socket callback functions
+// func onOrderTrades(message fyersws.OrderMessage) {
+// 	fmt.Printf("Trade Response: %s\n", message)
+// }
 
-func onOrderPositions(message fyersws.OrderMessage) {
-	fmt.Printf("Position Response: %s\n", message)
-}
+// func onOrderPositions(message fyersws.OrderMessage) {
+// 	fmt.Printf("Position Response: %s\n", message)
+// }
 
-func onOrderUpdates(message fyersws.OrderMessage) {
-	fmt.Printf("Order Response: %s\n", message)
-}
+// func onOrderUpdates(message fyersws.OrderMessage) {
+// 	fmt.Printf("Order Response: %s\n", message)
+// }
 
-func onOrderGeneral(message fyersws.OrderMessage) {
-	fmt.Printf("General: %s\n", message)
-}
+// func onOrderGeneral(message fyersws.OrderMessage) {
+// 	fmt.Printf("General: %s\n", message)
+// }
 
-func onOrderError(message fyersws.OrderError) {
-	fmt.Printf("Error: %s\n", message)
-}
+// func onOrderError(message fyersws.OrderError) {
+// 	fmt.Printf("Error: %s\n", message)
+// }
 
-func onOrderClose(message fyersws.OrderClose) {
-	fmt.Printf("Response: %s\n", message)
-}
+// func onOrderClose(message fyersws.OrderClose) {
+// 	fmt.Printf("Response: %s\n", message)
+// }
