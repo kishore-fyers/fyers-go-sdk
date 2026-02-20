@@ -245,19 +245,72 @@ Use **DataSocket** for live market data (quotes, depth) and **OrderSocket** for 
 
 ```go
 // Data WebSocket (symbols, lite/full mode)
-fyModel := fyersgosdk.NewFyersModel(appId, accessToken)
-result, err := fyersgosdk.DataSocket(fyModel, fyersgosdk.DataSocketRequest{
-    Symbols: []string{"NSE:SBIN-EQ"},
-    LiteMode: false,
-    DataType: "symbol",
-})
+var dataSocket *fyersws.FyersDataSocket
+onConnect := func() {
+    dataSocket.Subscribe(symbols, datatype)
+}
+
+dataSocket = fyersws.NewFyersDataSocket(
+    accessToken, // Access token in the format "appid:accesstoken"
+    "",          // Log path - leave empty to auto-create logs in the current directory
+    true,        // Lite mode disabled. Set to true if you want a lite response
+    false,       // Save response in a log file instead of printing it
+    true,        // Enable auto-reconnection to WebSocket on disconnection
+    50,          // reconnectRetry: max reconnect attempts (same as Python default; cap 50)
+    onConnect,   // Callback: subscribe on every connect (first + after reconnect)
+    onClose,     // Callback function to handle WebSocket connection close events
+    onError,     // Callback function to handle WebSocket errors
+    onMessage,   // Callback function to handle incoming messages from the WebSocket
+)
+
+err := dataSocket.Connect()
+if err != nil {
+    fmt.Printf("failed to connect to Data Socket: %v", err)
+    return
+}
+
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+<-sigChan
+fmt.Println("\nReceived interrupt signal, closing connection...")
+
+dataSocket.CloseConnection()
 
 // Order WebSocket (trades, positions, orders)
-fyClient := fyersgosdk.SetClientData(appId, appSecret, redirectUrl)
-fyClient.SetAccessToken(accessToken)
-result, err := fyersgosdk.OrderSocket(fyClient, fyersgosdk.OrderSocketRequest{
-    TradeOperations: []string{"OnOrders", "OnTrades", "OnPositions"},
-})
+orderSocket := fyersws.NewFyersOrderSocket(
+    accessToken,      // Access token in the format "appid:accesstoken"
+    false,            // Write to file - set to true if you want to save responses to a log file
+    "",               // Log path - leave empty to auto-create logs in the current directory
+    onOrderTrades,    // Callback function to handle trade events
+    onOrderPositions, // Callback function to handle position events
+    onOrderUpdates,   // Callback function to handle order events
+    onOrderGeneral,   // Callback function to handle general events
+    onOrderError,     // Callback function to handle WebSocket errors
+    nil,   // Callback function called when WebSocket connection is established
+    onOrderClose,     // Callback function to handle WebSocket connection close events
+    true,             // Enable auto-reconnection to WebSocket on disconnection
+    5,                // Maximum number of reconnection attempts
+)
+
+// Establish a connection to the Fyers Order WebSocket
+err := orderSocket.Connect()
+if err != nil {
+    fmt.Printf("failed to connect to Order Socket: %v", err)
+    return
+}
+
+if len(tradeOperations) > 0 {
+    orderSocket.SubscribeMultiple(tradeOperations)
+}
+
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+<-sigChan
+fmt.Println("\nReceived interrupt signal, closing connection...")
+
+orderSocket.CloseConnection()
 ```
 
 ## 📁 Examples
