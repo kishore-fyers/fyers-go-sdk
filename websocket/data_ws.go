@@ -30,10 +30,10 @@ type FyersDataSocket struct {
 	channels             []int
 	runningChannels      map[int]bool
 	dataType             string
-	OnMessage            func(map[string]interface{})
-	OnError              func(map[string]interface{})
+	OnMessage            func(DataResponse)
+	OnError              func(DataError)
 	OnOpen               func()
-	OnClose              func(map[string]interface{})
+	OnClose              func(DataClose)
 	updateTick           bool
 	ackCount             int
 	wsRun                *websocket.Conn
@@ -86,9 +86,9 @@ func NewFyersDataSocket(
 	reconnect bool,
 	reconnectRetry int,
 	onConnect func(),
-	onClose func(map[string]interface{}),
-	onError func(map[string]interface{}),
-	onMessage func(map[string]interface{}),
+	onClose func(DataClose),
+	onError func(DataError),
+	onMessage func(DataResponse),
 ) *FyersDataSocket {
 	// Load field mappings from map.json
 	fieldMappings, err := loadFieldMappingsOnce()
@@ -283,13 +283,56 @@ func MarshalDataResponseInOrder(resp map[string]interface{}) ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
+// FormatDataResponseInOrder marshals the data response map to JSON (same key order as MarshalDataResponseInOrder) and returns the string.
+// Use this for logging/printing in OnMessage; marshal and string conversion happen inside the SDK.
+func FormatDataResponseInOrder(resp map[string]interface{}) string {
+	b, err := MarshalDataResponseInOrder(resp)
+	if err != nil {
+		return fmt.Sprintf("%v", resp)
+	}
+	return string(b)
+}
+
+// DataResponse wraps the data feed message for OnMessage. It implements fmt.Stringer so that
+// fmt.Printf("Response: %s\n", message) prints ordered JSON.
+type DataResponse map[string]interface{}
+
+// String returns the message as JSON with keys in Fyers data feed order.
+func (d DataResponse) String() string {
+	return FormatDataResponseInOrder(map[string]interface{}(d))
+}
+
+// DataError wraps the error payload for OnError. Implements fmt.Stringer for JSON output.
+type DataError map[string]interface{}
+
+// String returns the error message as JSON.
+func (d DataError) String() string {
+	b, err := json.Marshal(map[string]interface{}(d))
+	if err != nil {
+		return fmt.Sprintf("%v", map[string]interface{}(d))
+	}
+	return string(b)
+}
+
+// DataClose wraps the close payload for OnClose. Implements fmt.Stringer for JSON output.
+type DataClose map[string]interface{}
+
+// String returns the close message as JSON.
+func (d DataClose) String() string {
+	b, err := json.Marshal(map[string]interface{}(d))
+	if err != nil {
+		return fmt.Sprintf("%v", map[string]interface{}(d))
+	}
+	return string(b)
+}
+
 // AccessTokenToHSMToken converts access token to HSM token by decoding JWT
 func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	// Check if access token is in the correct format
 	if !strings.Contains(f.accessToken, ":") {
 		fmt.Printf("Access token format error: expected format 'APPID:TOKEN', got: %s\n", f.accessToken)
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": INVALID_TOKEN,
@@ -304,7 +347,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	if len(parts) != 2 {
 		fmt.Printf("Access token format error: expected exactly one colon, got: %s\n", f.accessToken)
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": INVALID_TOKEN,
@@ -322,7 +365,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	if len(tokenParts) != 3 {
 		fmt.Printf("JWT token format error: expected 3 parts, got %d\n", len(tokenParts))
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": INVALID_TOKEN,
@@ -345,7 +388,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	if err != nil {
 		fmt.Printf("Base64 decode error: %v\n", err)
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": INVALID_TOKEN,
@@ -361,7 +404,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	if err != nil {
 		fmt.Printf("JSON unmarshal error: %v\n", err)
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": INVALID_TOKEN,
@@ -377,7 +420,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		currentTime := time.Now().Unix()
 		if expTime-currentTime < 0 {
 			if f.OnError != nil {
-				f.OnError(map[string]interface{}{
+				f.OnError(DataError{
 					"type":    AUTH_TYPE,
 					"code":    TOKEN_EXPIRED,
 					"message": TOKEN_EXPIRED_MSG,
@@ -398,7 +441,7 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 
 	fmt.Printf("hsm_key not found in token payload\n")
 	if f.OnError != nil {
-		f.OnError(map[string]interface{}{
+		f.OnError(DataError{
 			"type":    AUTH_TYPE,
 			"code":    AUTH_ERROR_CODE,
 			"message": INVALID_TOKEN,
@@ -551,13 +594,13 @@ func (f *FyersDataSocket) readMessages() {
 				if strings.Contains(errMsg, "timeout") || strings.Contains(errMsg, "deadline") {
 					errMsg = "Connection timed out"
 				}
-				f.OnError(map[string]interface{}{"error": errMsg})
+				f.OnError(DataError{"error": errMsg})
 			}
 
 			if !restartFlag {
 				// fmt.Printf("[FyersDataSocket RECONNECT] reconnection disabled (restartFlag=false); invoking OnClose\n")
 				if f.OnClose != nil {
-					f.OnClose(map[string]interface{}{
+					f.OnClose(DataClose{
 						"code":    SUCCESS_CODE,
 						"message": CONNECTION_CLOSED,
 						"s":       SUCCESS,
@@ -592,7 +635,7 @@ func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 		if attempts >= maxAttempts {
 			// fmt.Printf("[FyersDataSocket RECONNECT] giving up: max attempts reached (%d), invoking OnClose\n", maxAttempts)
 			if f.OnClose != nil {
-				f.OnClose(map[string]interface{}{
+				f.OnClose(DataClose{
 					"code":    SUCCESS_CODE,
 					"message": MAX_RECONNECT_ATTEMPTS_REACHED,
 					"s":       ERROR,
@@ -645,7 +688,7 @@ func (f *FyersDataSocket) handleMessage(message []byte) {
 	// Check if message is too short
 	if len(message) < 3 {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{"error": "Message too short"})
+			f.OnError(DataError{"error": "Message too short"})
 		}
 		return
 	}
@@ -698,7 +741,7 @@ func (f *FyersDataSocket) handleAuthResponse(data []byte) {
 
 	if stringVal == "K" {
 		if f.OnMessage != nil {
-			f.OnMessage(map[string]interface{}{
+			f.OnMessage(DataResponse{
 				"type":    AUTH_TYPE,
 				"code":    SUCCESS_CODE,
 				"message": AUTH_SUCCESS,
@@ -707,7 +750,7 @@ func (f *FyersDataSocket) handleAuthResponse(data []byte) {
 		}
 	} else {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    AUTH_TYPE,
 				"code":    AUTH_ERROR_CODE,
 				"message": AUTH_FAIL,
@@ -744,7 +787,7 @@ func (f *FyersDataSocket) handleSubscribeResponse(data []byte) {
 
 	if stringVal == "K" {
 		if f.OnMessage != nil {
-			f.OnMessage(map[string]interface{}{
+			f.OnMessage(DataResponse{
 				"type":    SUBS_TYPE,
 				"code":    SUCCESS_CODE,
 				"message": SUBSCRIBE_SUCCESS,
@@ -753,7 +796,7 @@ func (f *FyersDataSocket) handleSubscribeResponse(data []byte) {
 		}
 	} else {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    SUBS_TYPE,
 				"code":    SUBS_ERROR_CODE,
 				"message": SUBSCRIBE_FAIL,
@@ -783,7 +826,7 @@ func (f *FyersDataSocket) handleUnsubscribeResponse(data []byte) {
 
 	if stringVal == "K" {
 		if f.OnMessage != nil {
-			f.OnMessage(map[string]interface{}{
+			f.OnMessage(DataResponse{
 				"type":    UNSUBS_TYPE,
 				"code":    SUCCESS_CODE,
 				"message": UNSUBSCRIBE_SUCCESS,
@@ -792,7 +835,7 @@ func (f *FyersDataSocket) handleUnsubscribeResponse(data []byte) {
 		}
 	} else {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{
+			f.OnError(DataError{
 				"type":    UNSUBS_TYPE,
 				"code":    UNSUBS_ERROR_CODE,
 				"message": UNSUBSCRIBE_FAIL,
@@ -807,7 +850,7 @@ func (f *FyersDataSocket) handleDataFeedResponse(data []byte) {
 	fieldMappings := f.fieldMappings
 	if fieldMappings == nil {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{"error": "Field mappings not loaded"})
+			f.OnError(DataError{"error": "Field mappings not loaded"})
 		}
 		return
 	}
@@ -951,7 +994,7 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 
 	// Send decoded data to callback
 	if f.OnMessage != nil {
-		f.OnMessage(processedResponse)
+		f.OnMessage(DataResponse(processedResponse))
 	}
 
 	// Seed lastLtp from snapshot so the first lite tick with the same value does not emit again (avoid duplicate response).
@@ -1074,7 +1117,7 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 				}
 				processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "scrips")
 				if f.OnMessage != nil {
-					f.OnMessage(processedResponse)
+					f.OnMessage(DataResponse(processedResponse))
 				}
 			}
 		} else if idxFlag {
@@ -1087,7 +1130,7 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 				}
 				processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "index")
 				if f.OnMessage != nil {
-					f.OnMessage(processedResponse)
+					f.OnMessage(DataResponse(processedResponse))
 				}
 			}
 		} else if dpFlag {
@@ -1100,7 +1143,7 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 				}
 				processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "depth")
 				if f.OnMessage != nil {
-					f.OnMessage(processedResponse)
+					f.OnMessage(DataResponse(processedResponse))
 				}
 			}
 		}
@@ -1312,7 +1355,7 @@ func (f *FyersDataSocket) processMessageQueue() {
 				err := f.wsRun.WriteMessage(websocket.BinaryMessage, msg)
 				if err != nil {
 					if f.OnError != nil {
-						f.OnError(map[string]interface{}{"error": err.Error()})
+						f.OnError(DataError{"error": err.Error()})
 					}
 				}
 			}
@@ -1522,7 +1565,7 @@ func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 			return
 		}
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{"error": errorMsg})
+			f.OnError(DataError{"error": errorMsg})
 		}
 		return
 	}
@@ -1543,13 +1586,13 @@ func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 
 	if len(wrongSymbols) > 0 {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{"invalid_symbols": wrongSymbols})
+			f.OnError(DataError{"invalid_symbols": wrongSymbols})
 		}
 	}
 
 	if dpIndexFlag {
 		if f.OnError != nil {
-			f.OnError(map[string]interface{}{"error": INDEX_DEPTH_ERROR_MESSAGE})
+			f.OnError(DataError{"error": INDEX_DEPTH_ERROR_MESSAGE})
 		}
 	}
 
@@ -1582,7 +1625,7 @@ func (f *FyersDataSocket) KeepRunning() {
 				err := f.wsRun.WriteMessage(websocket.TextMessage, []byte("ping"))
 				if err != nil {
 					if f.OnError != nil {
-						f.OnError(map[string]interface{}{"error": err.Error()})
+						f.OnError(DataError{"error": err.Error()})
 					}
 				}
 			}
@@ -1607,7 +1650,7 @@ func (f *FyersDataSocket) CloseConnection() {
 	f.stopOnce.Do(func() { close(f.stopChan) })
 
 	if f.OnClose != nil {
-		f.OnClose(map[string]interface{}{
+		f.OnClose(DataClose{
 			"code":    SUCCESS_CODE,
 			"message": CONNECTION_CLOSED,
 			"s":       SUCCESS,
@@ -1630,7 +1673,7 @@ func (f *FyersDataSocket) handleResumePauseResponse(data []byte, respType int) {
 		if respType == 7 {
 			messageType = "pause"
 		}
-		f.OnMessage(map[string]interface{}{
+		f.OnMessage(DataResponse{
 			"type": messageType,
 			"data": data,
 		})
@@ -1666,7 +1709,7 @@ func (f *FyersDataSocket) handleLiteFullModeResponse(data []byte) {
 						messageType = LITE_MODE_TYPE
 						message = LITE_MODE
 					}
-					f.OnMessage(map[string]interface{}{
+					f.OnMessage(DataResponse{
 						"type":    messageType,
 						"code":    SUCCESS_CODE,
 						"message": message,
@@ -1675,7 +1718,7 @@ func (f *FyersDataSocket) handleLiteFullModeResponse(data []byte) {
 				}
 			} else {
 				if f.OnError != nil {
-					f.OnError(map[string]interface{}{
+					f.OnError(DataError{
 						"code":    MODE_ERROR_CODE,
 						"message": MODE_CHANGE_ERROR,
 						"s":       ERROR,
@@ -1714,7 +1757,7 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 					f.resp[topicName]["type"] = "sf"
 					processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "scrips")
 					if f.OnMessage != nil {
-						f.OnMessage(processedResponse)
+						f.OnMessage(DataResponse(processedResponse))
 					}
 				}
 			}
@@ -1737,7 +1780,7 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 					f.resp[topicName]["type"] = "if"
 					processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], "index")
 					if f.OnMessage != nil {
-						f.OnMessage(processedResponse)
+						f.OnMessage(DataResponse(processedResponse))
 					}
 				}
 			}
