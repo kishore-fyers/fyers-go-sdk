@@ -120,7 +120,6 @@ func (m *FyersModel) CancelPendingOrders(req CancelPendingOrdersRequest) (string
 	return string(resp.Body), nil
 }
 
-// ConvertPosition sends POST to /positions with symbol, positionSide, convertQty, convertFrom, convertTo, overnight.
 func (m *FyersModel) ConvertPosition(req ConvertPositionRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {

@@ -1,9 +1,5 @@
 package fyersgosdk
 
-/*
-	HTTP helper functions with methods for parsing Kite style JSON envelopes.
-*/
-
 import (
 	"bytes"
 	"io"
@@ -15,23 +11,19 @@ import (
 	"time"
 )
 
-// HTTPClient represents an HTTP client.
 type HTTPClient interface {
 	Do(method, rURL string, params url.Values, headers http.Header) (HTTPResponse, error)
 	DoRaw(method, rURL string, reqBody []byte, headers http.Header) (HTTPResponse, error)
-	// DoEnvelope(method, url string, params url.Values, headers http.Header, obj interface{}) error
-	// DoJSON(method, url string, params url.Values, headers http.Header, obj interface{}) (HTTPResponse, error)
+
 	GetClient() *httpClient
 }
 
-// httpClient is the default implementation of HTTPClient.
 type httpClient struct {
 	client *http.Client
 	hLog   *log.Logger
 	debug  bool
 }
 
-// HTTPResponse encompasses byte body  + the response of an HTTP request.
 type HTTPResponse struct {
 	Body     []byte
 	Response *http.Response
@@ -67,7 +59,6 @@ func (h *httpClient) Do(method, rURL string, params url.Values, headers http.Hea
 	return h.DoRaw(method, rURL, []byte(params.Encode()), headers)
 }
 
-// Do executes an HTTP request and returns the response.
 func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Header) (HTTPResponse, error) {
 	var (
 		resp     = HTTPResponse{}
@@ -75,7 +66,6 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 		postBody io.Reader
 	)
 
-	// Encode POST / PUT / PATCH / DELETE params.
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 		postBody = bytes.NewReader(reqBody)
 	}
@@ -89,14 +79,12 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 		req.Header = headers
 	}
 
-	// If a content-type isn't set, set the default one.
 	if req.Header.Get("Content-Type") == "" {
 		if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		}
 	}
 
-	// If the request method is GET (or DELETE without a JSON body), add the params as QueryString.
 	if method == http.MethodGet || (method == http.MethodDelete && req.Header.Get("Content-Type") != "application/json") {
 		req.URL.RawQuery = string(reqBody)
 	}
@@ -122,62 +110,6 @@ func (h *httpClient) DoRaw(method, rURL string, reqBody []byte, headers http.Hea
 	return resp, nil
 }
 
-// DoEnvelope makes an HTTP request and parses the JSON response (fastglue envelop structure)
-// func (h *httpClient) DoEnvelope(method, url string, params url.Values, headers http.Header, obj interface{}) error {
-// 	resp, err := h.Do(method, url, params, headers)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	err = readEnvelope(resp, obj)
-// 	if err != nil {
-// 		if _, ok := err.(Error); !ok {
-// 			h.hLog.Printf("Error parsing JSON response: %v", err)
-// 		}
-// 	}
-
-// 	return err
-// }
-
-// func readEnvelope(resp HTTPResponse, obj interface{}) error {
-// 	// Successful request, but error envelope.
-// 	if resp.Response.StatusCode >= http.StatusBadRequest {
-// 		var e errorEnvelope
-// 		if err := json.Unmarshal(resp.Body, &e); err != nil {
-// 			return NewError(DataError, "Error parsing response.", nil)
-// 		}
-
-// 		return newError(e.ErrorType, e.Message, resp.Response.StatusCode, e.Data)
-// 	}
-
-// 	// We now unmarshal the body.
-// 	envl := envelope{}
-// 	envl.Data = obj
-
-// 	if err := json.Unmarshal(resp.Body, &envl); err != nil {
-// 		return NewError(DataError, "Error parsing response.", nil)
-// 	}
-
-// 	return nil
-// }
-
-// // DoJSON makes an HTTP request and parses the JSON response.
-// func (h *httpClient) DoJSON(method, url string, params url.Values, headers http.Header, obj interface{}) (HTTPResponse, error) {
-// 	resp, err := h.Do(method, url, params, headers)
-// 	if err != nil {
-// 		return resp, err
-// 	}
-
-// 	// We now unmarshal the body.
-// 	if err := json.Unmarshal(resp.Body, &obj); err != nil {
-// 		h.hLog.Printf("Error parsing JSON response: %v | %s", err, resp.Body)
-// 		return resp, NewError(DataError, "Error parsing response.", nil)
-// 	}
-
-// 	return resp, nil
-// }
-
-// GetClient return's the underlying net/http client.
 func (h *httpClient) GetClient() *httpClient {
 	return h
 }

@@ -1,7 +1,6 @@
 package fyersgosdk
 
 const (
-	//Live
 	BaseURL      = "https://api-t1.fyers.in/api/v3"
 	BaseDataURL  = "https://api-t1.fyers.in/data"
 	Websocket    = "wss://socket.fyers.in/trade/v3"

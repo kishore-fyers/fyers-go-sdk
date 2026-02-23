@@ -23,7 +23,6 @@ func (m *FyersModel) GetHistory(historyRequest HistoryRequest) (string, error) {
 	return string(resp.Body), nil
 }
 
-// GetStockQuotes returns quotes for up to 50 symbols (e.g. NSE:SBIN-EQ).
 func (m *FyersModel) GetStockQuotes(symbols []string) (string, error) {
 	if len(symbols) == 0 {
 		return "", fmt.Errorf("at least one symbol required")

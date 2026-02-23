@@ -14,18 +14,8 @@ func SetClientData(appId, appSecret, redirectUrl string) *Client {
 		httpClient:  NewHTTPClient(nil, nil, false),
 	}
 
-	// Create a default http handler with default timeout.
-	// client.SetHTTPClient(&http.Client{
-	// 	Timeout: requestTimeout,
-	// })
-
 	return client
 }
-
-// func NewClient(options ClientOptions) *Client {
-// 		httpClient := NewHTTPClient(options.HTTPClient, options.Logger, options.Debug)
-
-// }
 
 func (c *Client) SetAccessToken(accessToken string) *Client {
 	c.accessToken = accessToken
@@ -36,8 +26,6 @@ func (c *Client) GetLoginURL() string {
 	return fmt.Sprintf("%s&client_id=%s&redirect_uri=%s&response_type=%s&state=%s", GenerateAuthCodeURL, c.appId, c.redirectUrl, "code", "sample_state")
 }
 
-// NewFyersModel creates an API client with client_id and access token.
-// Use this for all API calls after obtaining the access token via Client.GenerateAccessToken.
 func NewFyersModel(appId, accessToken string) *FyersModel {
 	return &FyersModel{
 		appId:       appId,
@@ -53,11 +41,10 @@ func (m *FyersModel) authHeader() http.Header {
 }
 
 func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string, error) {
-	// Get SHA256 checksum
+
 	h := sha256.New()
 	h.Write([]byte(fyClient.appId + ":" + fyClient.appSecret))
 
-	// Create JSON request body
 	requestBody := fmt.Sprintf(`{"code":"%s","appIdHash":"%s","grant_type":"authorization_code"}`, authToken, fmt.Sprintf("%x", h.Sum(nil)))
 
 	response, err := c.httpClient.DoRaw(http.MethodPost, ValidateAuthCodeURL, []byte(requestBody), nil)
@@ -69,11 +56,10 @@ func (c *Client) GenerateAccessToken(authToken string, fyClient *Client) (string
 }
 
 func (c *Client) GenerateAccessTokenFromRefreshToken(refreshToken, pin string, fyClient *Client) (string, error) {
-	// Get SHA256 checksum
+
 	h := sha256.New()
 	h.Write([]byte(fyClient.appId + ":" + fyClient.appSecret))
 
-	// Create JSON request body
 	requestBody := fmt.Sprintf(`{"refresh_token":"%s","appIdHash":"%s","grant_type":"refresh_token","pin":"%s"}`, refreshToken, fmt.Sprintf("%x", h.Sum(nil)), pin)
 
 	headers := make(http.Header)

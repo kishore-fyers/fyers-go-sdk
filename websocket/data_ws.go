@@ -17,7 +17,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// FyersDataSocket represents the main WebSocket client
 type FyersDataSocket struct {
 	url                  string
 	accessToken          string
@@ -55,29 +54,22 @@ type FyersDataSocket struct {
 	stopChan             chan bool
 	stopOnce             sync.Once
 
-	// State management for continuous updates (like Python)
-	scripsSym     map[uint16]string                 // topic_id -> topic_name for scrips
-	indexSym      map[uint16]string                 // topic_id -> topic_name for index
-	dpSym         map[uint16]string                 // topic_id -> topic_name for depth
-	resp          map[string]map[string]interface{} // topic_name -> response data
-	fieldMappings map[string][]string               // Add this line
+	scripsSym     map[uint16]string
+	indexSym      map[uint16]string
+	dpSym         map[uint16]string
+	resp          map[string]map[string]interface{}
+	fieldMappings map[string][]string
 
-	// lastLtpScrips/lastLtpIndex: dedup lite ticks (emit only when LTP changes, match Python). Key = topic name, value = last raw int32 LTP.
 	lastLtpScrips map[string]int32
 	lastLtpIndex  map[string]int32
 
-	// Subscription cache: on reconnect we re-subscribe without calling the symbol-token API (avoids "unexpected EOF" / subscription failed when API is flaky).
 	cachedSubscribeSymbols  []string
 	cachedSubscribeDataType string
 	cachedSubscribeDataDict map[string]string
 }
 
-// readDeadlineDuration is the max time to wait for a message. Prevents blocking forever when network is lost (no internet).
-// Fixed duration (e.g. 30s) so timeout triggers sooner regardless of maxReconnectAttempts.
 const readDeadlineDuration = 30 * time.Second
 
-// NewFyersDataSocket creates a new FyersDataSocket instance.
-// reconnectRetry sets max reconnect attempts; default 5. Same rule as Python: cap at 50, use min(50, reconnectRetry).
 func NewFyersDataSocket(
 	accessToken string,
 	logPath string,
@@ -90,7 +82,6 @@ func NewFyersDataSocket(
 	onError func(DataError),
 	onMessage func(DataResponse),
 ) *FyersDataSocket {
-	// Load field mappings from map.json
 	fieldMappings, err := loadFieldMappingsOnce()
 	if err != nil {
 		fmt.Printf("Failed to load field mappings: %v\n", err)
@@ -103,7 +94,6 @@ func NewFyersDataSocket(
 	if reconnectRetry < maxReconnectAttempts {
 		maxReconnectAttempts = reconnectRetry
 	}
-	// fmt.Printf("[FyersDataSocket RECONNECT] init: reconnect=%v, maxReconnectAttempts=%d\n", reconnect, maxReconnectAttempts)
 	return &FyersDataSocket{
 		url:                  "wss://socket.fyers.in/hsm/v1-5/prod",
 		accessToken:          accessToken,
@@ -148,7 +138,6 @@ func NewFyersDataSocket(
 	}
 }
 
-// Helper function to load field mappings once
 func loadFieldMappingsOnce() (map[string][]string, error) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
@@ -199,10 +188,8 @@ func getMappingsForMarshal() map[string][]string {
 	return marshalMappings
 }
 
-// buildOrderedKeys returns keys in data_val / index_val / depth order, then ch/chp, then any remainder.
 func buildOrderedKeys(resp map[string]interface{}, mappings map[string][]string) []string {
 	if mappings == nil {
-		// fallback: return keys in map iteration order (undefined)
 		keys := make([]string, 0, len(resp))
 		for k := range resp {
 			keys = append(keys, k)
@@ -235,14 +222,12 @@ func buildOrderedKeys(resp map[string]interface{}, mappings map[string][]string)
 			seen[key] = true
 		}
 	}
-	// Remainder: use fixed order so lite mode (ltp, symbol, type) is deterministic: ltp already from fieldOrder, then symbol, type.
 	for _, key := range []string{"symbol", "type"} {
 		if _, exists := resp[key]; exists && !seen[key] {
 			ordered = append(ordered, key)
 			seen[key] = true
 		}
 	}
-	// Any other keys in sorted order for determinism (Go map iteration is random).
 	var remainder []string
 	for key := range resp {
 		if !seen[key] {
@@ -254,9 +239,6 @@ func buildOrderedKeys(resp map[string]interface{}, mappings map[string][]string)
 	return ordered
 }
 
-// MarshalDataResponseInOrder marshals the data response map to JSON with keys in the same order
-// as the Fyers data_val / index_val / depth feed: ltp, vol_traded_today, ..., type, symbol, ch, chp.
-// Use this when you need output order to match the Python SDK or a fixed field order.
 func MarshalDataResponseInOrder(resp map[string]interface{}) ([]byte, error) {
 	if resp == nil {
 		return []byte("null"), nil
@@ -283,8 +265,6 @@ func MarshalDataResponseInOrder(resp map[string]interface{}) ([]byte, error) {
 	return []byte(buf.String()), nil
 }
 
-// FormatDataResponseInOrder marshals the data response map to JSON (same key order as MarshalDataResponseInOrder) and returns the string.
-// Use this for logging/printing in OnMessage; marshal and string conversion happen inside the SDK.
 func FormatDataResponseInOrder(resp map[string]interface{}) string {
 	b, err := MarshalDataResponseInOrder(resp)
 	if err != nil {
@@ -293,19 +273,14 @@ func FormatDataResponseInOrder(resp map[string]interface{}) string {
 	return string(b)
 }
 
-// DataResponse wraps the data feed message for OnMessage. It implements fmt.Stringer so that
-// fmt.Printf("Response: %s\n", message) prints ordered JSON.
 type DataResponse map[string]interface{}
 
-// String returns the message as JSON with keys in Fyers data feed order.
 func (d DataResponse) String() string {
 	return FormatDataResponseInOrder(map[string]interface{}(d))
 }
 
-// DataError wraps the error payload for OnError. Implements fmt.Stringer for JSON output.
 type DataError map[string]interface{}
 
-// String returns the error message as JSON.
 func (d DataError) String() string {
 	b, err := json.Marshal(map[string]interface{}(d))
 	if err != nil {
@@ -314,10 +289,8 @@ func (d DataError) String() string {
 	return string(b)
 }
 
-// DataClose wraps the close payload for OnClose. Implements fmt.Stringer for JSON output.
 type DataClose map[string]interface{}
 
-// String returns the close message as JSON.
 func (d DataClose) String() string {
 	b, err := json.Marshal(map[string]interface{}(d))
 	if err != nil {
@@ -326,9 +299,7 @@ func (d DataClose) String() string {
 	return string(b)
 }
 
-// AccessTokenToHSMToken converts access token to HSM token by decoding JWT
 func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
-	// Check if access token is in the correct format
 	if !strings.Contains(f.accessToken, ":") {
 		fmt.Printf("Access token format error: expected format 'APPID:TOKEN', got: %s\n", f.accessToken)
 		if f.OnError != nil {
@@ -342,7 +313,6 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		return false
 	}
 
-	// Extract the token part (after the colon)
 	parts := strings.Split(f.accessToken, ":")
 	if len(parts) != 2 {
 		fmt.Printf("Access token format error: expected exactly one colon, got: %s\n", f.accessToken)
@@ -357,10 +327,8 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		return false
 	}
 
-	// Use only the token part for JWT decoding
 	tokenPart := parts[1]
 
-	// Split the JWT token into parts
 	tokenParts := strings.Split(tokenPart, ".")
 	if len(tokenParts) != 3 {
 		fmt.Printf("JWT token format error: expected 3 parts, got %d\n", len(tokenParts))
@@ -375,15 +343,12 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		return false
 	}
 
-	// Decode the payload (second part)
 	payloadB64 := tokenParts[1]
 
-	// Add padding if needed
 	if len(payloadB64)%4 != 0 {
 		payloadB64 += strings.Repeat("=", 4-len(payloadB64)%4)
 	}
 
-	// Decode base64
 	payloadBytes, err := base64.URLEncoding.DecodeString(payloadB64)
 	if err != nil {
 		fmt.Printf("Base64 decode error: %v\n", err)
@@ -398,7 +363,6 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		return false
 	}
 
-	// Parse JSON payload
 	var payload map[string]interface{}
 	err = json.Unmarshal(payloadBytes, &payload)
 	if err != nil {
@@ -414,7 +378,6 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		return false
 	}
 
-	// Check if token is expired
 	if exp, exists := payload["exp"]; exists {
 		expTime := int64(exp.(float64))
 		currentTime := time.Now().Unix()
@@ -432,10 +395,8 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 		}
 	}
 
-	// Extract hsm_key
 	if hsmKey, exists := payload["hsm_key"]; exists {
 		f.hsmToken = hsmKey.(string)
-		// Do not print here: auth success is reported via OnMessage when server responds after Connect()
 		return true
 	}
 
@@ -451,7 +412,6 @@ func (f *FyersDataSocket) AccessTokenToHSMToken() bool {
 	return false
 }
 
-// Connect establishes WebSocket connection
 func (f *FyersDataSocket) Connect() error {
 	if !f.AccessTokenToHSMToken() {
 		return fmt.Errorf("failed to get HSM token")
@@ -464,30 +424,21 @@ func (f *FyersDataSocket) Connect() error {
 	}
 
 	f.mu.Lock()
-	_ = f.reconnectAttempts > 0 // wasReconnect (debug commented)
+	_ = f.reconnectAttempts > 0
 	f.wsRun = conn
 	f.connected = true
 	f.reconnectAttempts = 0
 	f.reconnectDelay = 0
 	f.mu.Unlock()
 
-	// if wasReconnect {
-	// 	fmt.Printf("[FyersDataSocket RECONNECT] on_open: reconnection successful, reset attempt counter and delay\n")
-	// } else {
-	// 	fmt.Printf("[FyersDataSocket RECONNECT] on_open: first connection established\n")
-	// }
-
-	// Start message processing goroutine
 	go f.processMessageQueue()
 
-	// Send authentication message
 	authMsg := f.createAuthMessage()
 	err = f.wsRun.WriteMessage(websocket.BinaryMessage, authMsg)
 	if err != nil {
 		return err
 	}
 
-	// Send mode message (lite or full)
 	var modeMsg []byte
 	if f.lite {
 		modeMsg = f.createLiteModeMessage()
@@ -499,10 +450,8 @@ func (f *FyersDataSocket) Connect() error {
 		return err
 	}
 
-	// Start reading messages
 	go f.readMessages()
 
-	// Call onOpen callback
 	if f.OnOpen != nil {
 		f.OnOpen()
 	}
@@ -510,44 +459,34 @@ func (f *FyersDataSocket) Connect() error {
 	return nil
 }
 
-// createAuthMessage creates the authentication message in binary format
 func (f *FyersDataSocket) createAuthMessage() []byte {
-	// Calculate buffer size: 18 + len(hsm_token) + len(source)
 	bufferSize := 18 + len(f.hsmToken) + len(f.source)
 
-	// Create byte buffer
 	buffer := make([]byte, 0, bufferSize)
 
-	// Pack data length (buffer_size - 2)
 	lengthBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(lengthBytes, uint16(bufferSize-2))
 	buffer = append(buffer, lengthBytes...)
 
-	// Set ReqType (1 for auth)
 	buffer = append(buffer, 1)
 
-	// Set FieldCount (4 fields)
 	buffer = append(buffer, 4)
 
-	// Field-1: AuthToken
-	buffer = append(buffer, 1) // field ID
+	buffer = append(buffer, 1)
 	tokenLenBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(tokenLenBytes, uint16(len(f.hsmToken)))
 	buffer = append(buffer, tokenLenBytes...)
 	buffer = append(buffer, []byte(f.hsmToken)...)
 
-	// Field-2: Mode (1 byte)
-	buffer = append(buffer, 2)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
-	buffer = append(buffer, '1')  // mode = '1'
+	buffer = append(buffer, 2)
+	buffer = append(buffer, 0, 1)
+	buffer = append(buffer, '1')
 
-	// Field-3: Version (1 byte)
-	buffer = append(buffer, 3)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
-	buffer = append(buffer, 1)    // version = 1
+	buffer = append(buffer, 3)
+	buffer = append(buffer, 0, 1)
+	buffer = append(buffer, 1)
 
-	// Field-4: Source
-	buffer = append(buffer, 4) // field ID
+	buffer = append(buffer, 4)
 	sourceLenBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(sourceLenBytes, uint16(len(f.source)))
 	buffer = append(buffer, sourceLenBytes...)
@@ -556,8 +495,6 @@ func (f *FyersDataSocket) createAuthMessage() []byte {
 	return buffer
 }
 
-// readMessages reads messages from WebSocket. On connection error, runs reconnect logic (same as Python __on_close) when restartFlag is true.
-// A read deadline is set so that when the network is lost we get a timeout error and can reconnect instead of blocking forever.
 func (f *FyersDataSocket) readMessages() {
 	for {
 		select {
@@ -581,13 +518,8 @@ func (f *FyersDataSocket) readMessages() {
 			f.connected = false
 			restartFlag := f.restartFlag
 			maxAttempts := f.maxReconnectAttempts
-			_ = f.reconnectAttempts // attempts (debug commented)
+			_ = f.reconnectAttempts
 			f.mu.Unlock()
-
-			// if err != nil && (strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "deadline")) {
-			// 	fmt.Printf("[FyersDataSocket RECONNECT] on_close: read deadline/timeout (no data) -> triggering reconnect: %v\n", err)
-			// }
-			// fmt.Printf("[FyersDataSocket RECONNECT] on_close: error=%v, restartFlag=%v, attempts=%d/%d\n", err, restartFlag, attempts, maxAttempts)
 
 			if f.OnError != nil {
 				errMsg := err.Error()
@@ -598,7 +530,6 @@ func (f *FyersDataSocket) readMessages() {
 			}
 
 			if !restartFlag {
-				// fmt.Printf("[FyersDataSocket RECONNECT] reconnection disabled (restartFlag=false); invoking OnClose\n")
 				if f.OnClose != nil {
 					f.OnClose(DataClose{
 						"code":    SUCCESS_CODE,
@@ -609,7 +540,6 @@ func (f *FyersDataSocket) readMessages() {
 				return
 			}
 
-			// fmt.Printf("[FyersDataSocket RECONNECT] entering runReconnectLoop (maxAttempts=%d)\n", maxAttempts)
 			f.runReconnectLoop(maxAttempts)
 			return
 		}
@@ -618,12 +548,10 @@ func (f *FyersDataSocket) readMessages() {
 	}
 }
 
-// runReconnectLoop runs the same logic as Python __on_close reconnect path: backoff, clear state, Connect(); loops until success or max attempts. Does not close stopChan.
 func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 	for {
 		select {
 		case <-f.stopChan:
-			// fmt.Printf("[FyersDataSocket RECONNECT] runReconnectLoop: stopChan received, exiting\n")
 			return
 		default:
 		}
@@ -633,7 +561,6 @@ func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 		f.mu.Unlock()
 
 		if attempts >= maxAttempts {
-			// fmt.Printf("[FyersDataSocket RECONNECT] giving up: max attempts reached (%d), invoking OnClose\n", maxAttempts)
 			if f.OnClose != nil {
 				f.OnClose(DataClose{
 					"code":    SUCCESS_CODE,
@@ -646,8 +573,6 @@ func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 
 		attemptNum := attempts + 1
 		_ = attemptNum
-		// fmt.Printf("[FyersDataSocket RECONNECT] will retry: attempt %d of %d\n", attemptNum, maxAttempts)
-		// fmt.Printf("Attempting reconnect %d of %d...\n", attemptNum, maxAttempts)
 
 		f.mu.Lock()
 		delay := f.reconnectDelay
@@ -658,10 +583,9 @@ func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 		f.mu.Unlock()
 
 		if delay > 0 {
-			// fmt.Printf("[FyersDataSocket RECONNECT] backoff: Reconnection backoff: waiting %ds before reconnect (delay increases by 5s every 5 attempts).\n", delay)
 			select {
 			case <-f.stopChan:
-				// fmt.Printf("[FyersDataSocket RECONNECT] backoff interrupted by stopChan\n")
+
 				return
 			case <-time.After(time.Duration(delay) * time.Second):
 			}
@@ -670,22 +594,20 @@ func (f *FyersDataSocket) runReconnectLoop(maxAttempts int) {
 		f.mu.Lock()
 		f.reconnectAttempts++
 		f.scripsPerChannel[f.channelNum] = nil
-		// Do not clear symbolDict on reconnect (like Python: symbol_token is kept). OnOpen will re-subscribe and we'll repopulate from cache if needed.
+
 		f.mu.Unlock()
 
-		// fmt.Printf("[FyersDataSocket RECONNECT] clearing state and calling Connect() for attempt %d\n", attemptNum)
 		err := f.Connect()
 		if err == nil {
-			// fmt.Printf("[FyersDataSocket RECONNECT] Connect() succeeded, returning from runReconnectLoop\n")
+
 			return
 		}
-		// Retry silently (like Python): do not call OnError for each failed attempt; only the initial "Connection timed out" was already reported
+
 	}
 }
 
-// handleMessage processes incoming messages
 func (f *FyersDataSocket) handleMessage(message []byte) {
-	// Check if message is too short
+
 	if len(message) < 3 {
 		if f.OnError != nil {
 			f.OnError(DataError{"error": "Message too short"})
@@ -693,29 +615,26 @@ func (f *FyersDataSocket) handleMessage(message []byte) {
 		return
 	}
 
-	// Parse the response type like Python implementation
-	// struct.unpack("!HB", data[:3]) - 2 bytes for length, 1 byte for response type
 	_, respType := binary.BigEndian.Uint16(message[:2]), message[2]
 
 	switch respType {
-	case 1: // Authentication response
+	case 1:
 		f.handleAuthResponse(message)
-	case 4: // Subscription response
+	case 4:
 		f.handleSubscribeResponse(message)
-	case 5: // Unsubscription response
+	case 5:
 		f.handleUnsubscribeResponse(message)
-	case 6: // Data Feed Response
+	case 6:
 		f.handleDataFeedResponse(message)
-	case 7, 8: // Resume/Pause response
+	case 7, 8:
 		f.handleResumePauseResponse(message, int(respType))
-	case 12: // Full Mode Data Response
+	case 12:
 		f.handleLiteFullModeResponse(message)
 	default:
-		// Unknown response type - ignore silently like Python
+
 	}
 }
 
-// handleAuthResponse handles authentication response
 func (f *FyersDataSocket) handleAuthResponse(data []byte) {
 	if len(data) < 4 {
 		return
@@ -759,7 +678,6 @@ func (f *FyersDataSocket) handleAuthResponse(data []byte) {
 		}
 	}
 
-	// Parse ack count
 	if offset+1+2+4 <= len(data) {
 		offset += 1
 		offset += 2
@@ -767,7 +685,6 @@ func (f *FyersDataSocket) handleAuthResponse(data []byte) {
 	}
 }
 
-// handleSubscribeResponse handles subscription response
 func (f *FyersDataSocket) handleSubscribeResponse(data []byte) {
 	if len(data) < 5 {
 		return
@@ -806,7 +723,6 @@ func (f *FyersDataSocket) handleSubscribeResponse(data []byte) {
 	}
 }
 
-// handleUnsubscribeResponse handles unsubscription response
 func (f *FyersDataSocket) handleUnsubscribeResponse(data []byte) {
 	if len(data) < 5 {
 		return
@@ -845,7 +761,6 @@ func (f *FyersDataSocket) handleUnsubscribeResponse(data []byte) {
 	}
 }
 
-// handleDataFeedResponse handles data feed response
 func (f *FyersDataSocket) handleDataFeedResponse(data []byte) {
 	fieldMappings := f.fieldMappings
 	if fieldMappings == nil {
@@ -855,12 +770,10 @@ func (f *FyersDataSocket) handleDataFeedResponse(data []byte) {
 		return
 	}
 
-	// Parse message number and scrip count
 	if len(data) < 9 {
 		return
 	}
 
-	// Handle acknowledgment if needed
 	if f.ackCount > 0 {
 		f.updateCount++
 		messageNum := binary.BigEndian.Uint32(data[3:7])
@@ -882,17 +795,16 @@ func (f *FyersDataSocket) handleDataFeedResponse(data []byte) {
 		dataType := data[offset]
 		offset++
 
-		if dataType == 83 { // Snapshot datafeed
+		if dataType == 83 {
 			offset = f.handleSnapshotData(data, offset, fieldMappings)
-		} else if dataType == 85 { // Full mode datafeed
+		} else if dataType == 85 {
 			offset = f.handleFullModeData(data, offset, fieldMappings)
-		} else if dataType == 76 { // Lite mode datafeed
+		} else if dataType == 76 {
 			offset = f.handleLiteModeData(data, offset, fieldMappings)
 		}
 	}
 }
 
-// handleSnapshotData handles snapshot data feed
 func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappings map[string][]string) int {
 	if offset+2 >= len(data) {
 		return offset
@@ -913,7 +825,6 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 	topicName := string(data[offset : offset+int(topicNameLen)])
 	offset += int(topicNameLen)
 
-	// Determine data type based on topic name prefix and maintain mappings
 	var dataType string
 	var fieldNames []string
 
@@ -936,14 +847,12 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 		return offset
 	}
 
-	// Parse field count
 	if offset+1 >= len(data) {
 		return offset
 	}
 	fieldCount := data[offset]
 	offset++
 
-	// Parse field values
 	for i := 0; i < int(fieldCount); i++ {
 		if offset+4 > len(data) {
 			break
@@ -956,10 +865,8 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 		}
 	}
 
-	// Skip 2 bytes
 	offset += 2
 
-	// Parse multiplier and precision
 	if offset+3 <= len(data) {
 		multiplier := binary.BigEndian.Uint16(data[offset : offset+2])
 		offset += 2
@@ -970,7 +877,6 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 		f.resp[topicName]["precision"] = precision
 	}
 
-	// Parse exchange, exchange_token, symbol
 	valNames := []string{"exchange", "exchange_token", "symbol"}
 	for _, valName := range valNames {
 		if offset+1 <= len(data) {
@@ -989,15 +895,12 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 		f.resp[topicName]["symbol"] = symbol
 	}
 
-	// Apply precision and multiplier calculations
 	processedResponse := f.applyPrecisionAndMultiplier(f.resp[topicName], dataType)
 
-	// Send decoded data to callback
 	if f.OnMessage != nil {
 		f.OnMessage(DataResponse(processedResponse))
 	}
 
-	// Seed lastLtp from snapshot so the first lite tick with the same value does not emit again (avoid duplicate response).
 	if dataType == "scrips" {
 		if ltp, ok := f.resp[topicName]["ltp"].(int32); ok {
 			f.lastLtpScrips[topicName] = ltp
@@ -1011,7 +914,6 @@ func (f *FyersDataSocket) handleSnapshotData(data []byte, offset int, fieldMappi
 	return offset
 }
 
-// fullModeTickRelevantScrips: only emit OnMessage when one of these fields changes (avoids spam from exch_feed_time / last_traded_time).
 var fullModeTickRelevantScrips = map[string]bool{
 	"ltp": true, "vol_traded_today": true, "bid_size": true, "ask_size": true,
 	"bid_price": true, "ask_price": true, "last_traded_qty": true, "avg_trade_price": true,
@@ -1019,12 +921,10 @@ var fullModeTickRelevantScrips = map[string]bool{
 	"OI": true, "lower_ckt": true, "upper_ckt": true,
 }
 
-// fullModeTickRelevantIndex: only emit when one of these index fields changes.
 var fullModeTickRelevantIndex = map[string]bool{
 	"ltp": true, "prev_close_price": true, "high_price": true, "low_price": true, "open_price": true,
 }
 
-// handleFullModeData handles full mode data feed
 func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappings map[string][]string) int {
 	if offset+2 >= len(data) {
 		return offset
@@ -1039,11 +939,9 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 	fieldCount := data[offset]
 	offset++
 
-	// Track flags for different data types
 	sfFlag, idxFlag, dpFlag := false, false, false
 	f.updateTick = false
 
-	// Process field values and check for changes
 	for i := 0; i < int(fieldCount); i++ {
 		if offset+4 > len(data) {
 			break
@@ -1051,7 +949,6 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 		value := int32(binary.BigEndian.Uint32(data[offset : offset+4]))
 		offset += 4
 
-		// Check if topic ID exists in our mappings
 		if topicName, exists := f.scripsSym[topicID]; exists {
 			if i < len(fieldMappings["data_val"]) {
 				fieldName := fieldMappings["data_val"][i]
@@ -1105,13 +1002,12 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 		}
 	}
 
-	// Send update only if there were changes
 	if f.updateTick {
 		if sfFlag {
 			if topicName, exists := f.scripsSym[topicID]; exists {
-				// Ensure precision and multiplier are preserved for full mode updates
+
 				if _, hasPrecision := f.resp[topicName]["precision"]; !hasPrecision {
-					// If precision is missing, set default values
+
 					f.resp[topicName]["precision"] = uint8(2)
 					f.resp[topicName]["multiplier"] = uint16(100)
 				}
@@ -1122,9 +1018,9 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 			}
 		} else if idxFlag {
 			if topicName, exists := f.indexSym[topicID]; exists {
-				// Ensure precision and multiplier are preserved for full mode updates
+
 				if _, hasPrecision := f.resp[topicName]["precision"]; !hasPrecision {
-					// If precision is missing, set default values
+
 					f.resp[topicName]["precision"] = uint8(2)
 					f.resp[topicName]["multiplier"] = uint16(100)
 				}
@@ -1135,9 +1031,9 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 			}
 		} else if dpFlag {
 			if topicName, exists := f.dpSym[topicID]; exists {
-				// Ensure precision and multiplier are preserved for full mode updates
+
 				if _, hasPrecision := f.resp[topicName]["precision"]; !hasPrecision {
-					// If precision is missing, set default values
+
 					f.resp[topicName]["precision"] = uint8(2)
 					f.resp[topicName]["multiplier"] = uint16(100)
 				}
@@ -1152,7 +1048,6 @@ func (f *FyersDataSocket) handleFullModeData(data []byte, offset int, fieldMappi
 	return offset
 }
 
-// FloatSDK is a float64 that marshals to JSON as "x.0" when whole (to match Python SDK output).
 type FloatSDK float64
 
 func (f FloatSDK) MarshalJSON() ([]byte, error) {
@@ -1166,7 +1061,6 @@ func (f FloatSDK) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
-// asFloat64 returns the numeric value as float64 whether it was stored as int, float64, or FloatSDK.
 func asFloat64(v interface{}) (float64, bool) {
 	switch n := v.(type) {
 	case int:
@@ -1182,7 +1076,6 @@ func asFloat64(v interface{}) (float64, bool) {
 	}
 }
 
-// applyPrecisionAndMultiplier applies precision and multiplier calculations
 func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interface{}, dataType string) map[string]interface{} {
 	precision, precisionOk := response["precision"].(uint8)
 	multiplier, multiplierOk := response["multiplier"].(uint16)
@@ -1204,7 +1097,7 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 				newResponse["ltp"] = FloatSDK(float64(intValue) / (math.Pow(10, float64(precision)) * float64(multiplier)))
 			}
 		}
-		// Symbol with exchange prefix to match Python (e.g. MCX:SILVER26MARFUT)
+
 		if symbol, exists := response["symbol"]; exists {
 			symbolStr, _ := symbol.(string)
 			if symbolStr != "" && !strings.Contains(symbolStr, ":") {
@@ -1324,29 +1217,23 @@ func (f *FyersDataSocket) applyPrecisionAndMultiplier(response map[string]interf
 	return newResponse
 }
 
-// createAcknowledgmentMessage creates acknowledgment message
 func (f *FyersDataSocket) createAcknowledgmentMessage(messageNumber int) []byte {
 	buffer := make([]byte, 0, 10)
 
-	// Length (will be calculated)
 	buffer = append(buffer, 0, 0)
 
-	// Request type (6 for acknowledgment)
 	buffer = append(buffer, 6)
 
-	// Message number (4 bytes, big endian)
 	msgNumBytes := make([]byte, 4)
 	binary.BigEndian.PutUint32(msgNumBytes, uint32(messageNumber))
 	buffer = append(buffer, msgNumBytes...)
 
-	// Update length
 	length := len(buffer) - 2
 	binary.BigEndian.PutUint16(buffer[:2], uint16(length))
 
 	return buffer
 }
 
-// processMessageQueue processes queued messages
 func (f *FyersDataSocket) processMessageQueue() {
 	for {
 		select {
@@ -1365,77 +1252,62 @@ func (f *FyersDataSocket) processMessageQueue() {
 	}
 }
 
-// createLiteModeMessage creates the lite mode message in binary format
 func (f *FyersDataSocket) createLiteModeMessage() []byte {
 	buffer := make([]byte, 0, 20)
 
-	// Length (0 for now, will be calculated)
 	buffer = append(buffer, 0, 0)
 
-	// Request type (12 for mode change)
 	buffer = append(buffer, 12)
 
-	// Field count (2 fields)
 	buffer = append(buffer, 2)
 
-	// Field-1: Channel bits
-	buffer = append(buffer, 1)               // field ID
-	buffer = append(buffer, 0, 8)            // length = 8
-	channelBits := uint64(1) << f.channelNum // Set bit for channel
+	buffer = append(buffer, 1)
+	buffer = append(buffer, 0, 8)
+	channelBits := uint64(1) << f.channelNum
 	channelBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(channelBytes, channelBits)
 	buffer = append(buffer, channelBytes...)
 
-	// Field-2: Mode (76 for lite mode)
-	buffer = append(buffer, 2)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
-	buffer = append(buffer, 76)   // lite mode
+	buffer = append(buffer, 2)
+	buffer = append(buffer, 0, 1)
+	buffer = append(buffer, 76)
 
-	// Update length
 	length := len(buffer) - 2
 	binary.BigEndian.PutUint16(buffer[:2], uint16(length))
 
 	return buffer
 }
 
-// createFullModeMessage creates the full mode message in binary format
 func (f *FyersDataSocket) createFullModeMessage() []byte {
 	buffer := make([]byte, 0, 20)
 
-	// Length (0 for now, will be calculated)
 	buffer = append(buffer, 0, 0)
 
-	// Request type (12 for mode change)
 	buffer = append(buffer, 12)
 
-	// Field count (2 fields)
 	buffer = append(buffer, 2)
 
-	// Field-1: Channel bits
-	buffer = append(buffer, 1)               // field ID
-	buffer = append(buffer, 0, 8)            // length = 8
-	channelBits := uint64(1) << f.channelNum // Set bit for channel
+	buffer = append(buffer, 1)
+	buffer = append(buffer, 0, 8)
+	channelBits := uint64(1) << f.channelNum
 	channelBytes := make([]byte, 8)
 	binary.BigEndian.PutUint64(channelBytes, channelBits)
 	buffer = append(buffer, channelBytes...)
 
-	// Field-2: Mode (70 for full mode)
-	buffer = append(buffer, 2)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
-	buffer = append(buffer, 70)   // full mode
+	buffer = append(buffer, 2)
+	buffer = append(buffer, 0, 1)
+	buffer = append(buffer, 70)
 
-	// Update length
 	length := len(buffer) - 2
 	binary.BigEndian.PutUint16(buffer[:2], uint16(length))
 
 	return buffer
 }
 
-// createSubscriptionMessage creates the subscription message in binary format
 func (f *FyersDataSocket) createSubscriptionMessage(symbols map[string]string) []byte {
-	// Create symbols data
+
 	symbolsData := make([]byte, 0)
-	symbolsData = append(symbolsData, 0, 0) // Placeholder for count
+	symbolsData = append(symbolsData, 0, 0)
 
 	symbolCount := 0
 	for hsmSymbol := range symbols {
@@ -1445,45 +1317,37 @@ func (f *FyersDataSocket) createSubscriptionMessage(symbols map[string]string) [
 		symbolCount++
 	}
 
-	// Update symbol count
 	binary.BigEndian.PutUint16(symbolsData[:2], uint16(symbolCount))
 
-	// Calculate total length
 	dataLen := 18 + len(symbolsData) + len(f.accessToken) + len(f.source)
 
 	buffer := make([]byte, 0, dataLen)
 
-	// Length
 	lengthBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(lengthBytes, uint16(dataLen))
 	buffer = append(buffer, lengthBytes...)
 
-	// Request type (4 for subscription)
 	buffer = append(buffer, 4)
 
-	// Field count (2 fields)
 	buffer = append(buffer, 2)
 
-	// Field-1: Symbols data
-	buffer = append(buffer, 1) // field ID
+	buffer = append(buffer, 1)
 	symbolsLenBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(symbolsLenBytes, uint16(len(symbolsData)))
 	buffer = append(buffer, symbolsLenBytes...)
 	buffer = append(buffer, symbolsData...)
 
-	// Field-2: Channel number
-	buffer = append(buffer, 2)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
+	buffer = append(buffer, 2)
+	buffer = append(buffer, 0, 1)
 	buffer = append(buffer, byte(f.channelNum))
 
 	return buffer
 }
 
-// createUnsubscriptionMessage creates the unsubscription message in binary format
 func (f *FyersDataSocket) createUnsubscriptionMessage(symbols map[string]string) []byte {
-	// Create symbols data
+
 	symbolsData := make([]byte, 0)
-	symbolsData = append(symbolsData, 0, 0) // Placeholder for count
+	symbolsData = append(symbolsData, 0, 0)
 
 	symbolCount := 0
 	for hsmSymbol := range symbols {
@@ -1493,41 +1357,33 @@ func (f *FyersDataSocket) createUnsubscriptionMessage(symbols map[string]string)
 		symbolCount++
 	}
 
-	// Update symbol count
 	binary.BigEndian.PutUint16(symbolsData[:2], uint16(symbolCount))
 
-	// Calculate total length
 	dataLen := 18 + len(symbolsData) + len(f.accessToken) + len(f.source)
 
 	buffer := make([]byte, 0, dataLen)
 
-	// Length
 	lengthBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(lengthBytes, uint16(dataLen))
 	buffer = append(buffer, lengthBytes...)
 
-	// Request type (5 for unsubscription)
 	buffer = append(buffer, 5)
 
-	// Field count (2 fields)
 	buffer = append(buffer, 2)
 
-	// Field-1: Symbols data
-	buffer = append(buffer, 1) // field ID
+	buffer = append(buffer, 1)
 	symbolsLenBytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(symbolsLenBytes, uint16(len(symbolsData)))
 	buffer = append(buffer, symbolsLenBytes...)
 	buffer = append(buffer, symbolsData...)
 
-	// Field-2: Channel number
-	buffer = append(buffer, 2)    // field ID
-	buffer = append(buffer, 0, 1) // length = 1
+	buffer = append(buffer, 2)
+	buffer = append(buffer, 0, 1)
 	buffer = append(buffer, byte(f.channelNum))
 
 	return buffer
 }
 
-// slicesEqual returns true if a and b have the same length and elements in the same order.
 func slicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -1540,16 +1396,14 @@ func slicesEqual(a, b []string) bool {
 	return true
 }
 
-// Subscribe subscribes to symbols. Uses cached HSM mapping on reconnect when the symbol-token API fails (e.g. unexpected EOF) so subscription still succeeds.
 func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 	f.dataType = dataType
 
-	// Convert symbols to HSM tokens (may fail on reconnect if API is flaky)
 	sc := newSymbolConversion(f.accessToken, dataType, f.logPath)
 	dataDict, wrongSymbols, dpIndexFlag, errorMsg := sc.symbolToHSMToken(symbols)
 
 	if errorMsg != "" || dataDict == nil {
-		// API failed (e.g. unexpected EOF right after reconnect). Use cache if we have one for same symbols+dataType.
+
 		f.mu.Lock()
 		cached := f.cachedSubscribeDataDict != nil && f.cachedSubscribeDataType == dataType && slicesEqual(f.cachedSubscribeSymbols, symbols)
 		dataDictToUse := f.cachedSubscribeDataDict
@@ -1570,7 +1424,6 @@ func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 		return
 	}
 
-	// API succeeded: update cache and symbolDict (topic -> user symbol, like Python symbol_token)
 	f.mu.Lock()
 	f.cachedSubscribeSymbols = make([]string, len(symbols))
 	copy(f.cachedSubscribeSymbols, symbols)
@@ -1596,25 +1449,21 @@ func (f *FyersDataSocket) Subscribe(symbols []string, dataType string) {
 		}
 	}
 
-	// Create subscription message in binary format
 	msg := f.createSubscriptionMessage(dataDict)
 	f.messageQueue <- msg
 }
 
-// Unsubscribe unsubscribes from symbols
 func (f *FyersDataSocket) Unsubscribe(symbols []string, dataType string) {
-	// Convert symbols to HSM tokens
+
 	sc := newSymbolConversion(f.accessToken, dataType, f.logPath)
 	dataDict, _, _, _ := sc.symbolToHSMToken(symbols)
 
-	// Create unsubscription message in binary format
 	msg := f.createUnsubscriptionMessage(dataDict)
 	f.messageQueue <- msg
 }
 
-// KeepRunning keeps the WebSocket connection alive
 func (f *FyersDataSocket) KeepRunning() {
-	// Send periodic ping messages
+
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -1635,9 +1484,8 @@ func (f *FyersDataSocket) KeepRunning() {
 	}
 }
 
-// CloseConnection closes the WebSocket connection. Sets restartFlag false first so reconnect is not triggered (same as Python close_connection).
 func (f *FyersDataSocket) CloseConnection() {
-	// fmt.Printf("[FyersDataSocket RECONNECT] CloseConnection: setting restartFlag=false and closing socket\n")
+
 	f.mu.Lock()
 	f.restartFlag = false
 	if f.wsRun != nil {
@@ -1658,16 +1506,14 @@ func (f *FyersDataSocket) CloseConnection() {
 	}
 }
 
-// IsConnected returns the connection status
 func (f *FyersDataSocket) IsConnected() bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.connected && f.wsRun != nil
 }
 
-// handleResumePauseResponse handles resume/pause response
 func (f *FyersDataSocket) handleResumePauseResponse(data []byte, respType int) {
-	// Implementation for resume/pause response
+
 	if f.OnMessage != nil {
 		messageType := "resume"
 		if respType == 7 {
@@ -1680,7 +1526,6 @@ func (f *FyersDataSocket) handleResumePauseResponse(data []byte, respType int) {
 	}
 }
 
-// handleLiteFullModeResponse handles lite/full mode response
 func (f *FyersDataSocket) handleLiteFullModeResponse(data []byte) {
 	if len(data) < 4 {
 		return
@@ -1694,7 +1539,7 @@ func (f *FyersDataSocket) handleLiteFullModeResponse(data []byte) {
 	offset += 1
 
 	if fieldCount >= 1 && offset+1+2 < len(data) {
-		offset += 1 // field ID
+		offset += 1
 		fieldLength := binary.BigEndian.Uint16(data[offset : offset+2])
 		offset += 2
 
@@ -1729,7 +1574,6 @@ func (f *FyersDataSocket) handleLiteFullModeResponse(data []byte) {
 	}
 }
 
-// handleLiteModeData handles lite mode data feed
 func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappings map[string][]string) int {
 	if offset+2 >= len(data) {
 		return offset
@@ -1738,13 +1582,11 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 	topicID := binary.BigEndian.Uint16(data[offset : offset+2])
 	offset += 2
 
-	// Check if topic ID exists in our mappings
 	if topicName, exists := f.scripsSym[topicID]; exists {
 		if offset+4 <= len(data) {
 			value := int32(binary.BigEndian.Uint32(data[offset : offset+4]))
 			offset += 4
 
-			// Dedup: emit only when LTP actually changed (same as Python: value != self.resp[...][data_val[0]]).
 			if value != -2147483648 && len(fieldMappings["data_val"]) > 0 {
 				last := f.lastLtpScrips[topicName]
 				if last != value {
@@ -1767,7 +1609,6 @@ func (f *FyersDataSocket) handleLiteModeData(data []byte, offset int, fieldMappi
 			value := int32(binary.BigEndian.Uint32(data[offset : offset+4]))
 			offset += 4
 
-			// Dedup: emit only when LTP actually changed (same as Python for index).
 			if value != -2147483648 && len(fieldMappings["index_val"]) > 0 {
 				last := f.lastLtpIndex[topicName]
 				if last != value {

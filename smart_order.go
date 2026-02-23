@@ -8,8 +8,6 @@ import (
 	"strconv"
 )
 
-// CreateSmartOrderLimit creates a smart order limit.
-// Returns the API response body as string or an error.
 func (m *FyersModel) CreateSmartOrderLimit(req CreateSmartOrderLimitRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -24,8 +22,6 @@ func (m *FyersModel) CreateSmartOrderLimit(req CreateSmartOrderLimitRequest) (st
 	return string(resp.Body), nil
 }
 
-// CreateSmartOrderStep creates a smart order step.
-// Returns the API response body as string or an error.
 func (m *FyersModel) CreateSmartOrderStep(req CreateSmartOrderStepRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -40,8 +36,6 @@ func (m *FyersModel) CreateSmartOrderStep(req CreateSmartOrderStepRequest) (stri
 	return string(resp.Body), nil
 }
 
-// CreateSmartOrderSIP creates a smart order SIP.
-// Returns the API response body as string or an error.
 func (m *FyersModel) CreateSmartOrderSIP(req CreateSmartOrderSIPRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -56,8 +50,6 @@ func (m *FyersModel) CreateSmartOrderSIP(req CreateSmartOrderSIPRequest) (string
 	return string(resp.Body), nil
 }
 
-// CreateSmartOrderTrail creates a smart order trail.
-// Returns the API response body as string or an error.
 func (m *FyersModel) CreateSmartOrderTrail(req CreateSmartOrderTrailRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -72,9 +64,6 @@ func (m *FyersModel) CreateSmartOrderTrail(req CreateSmartOrderTrailRequest) (st
 	return string(resp.Body), nil
 }
 
-// ModifySmartOrder modifies a smart order. Pass the flowId (or "id" from create response).
-// PATCH /smart-order/modify with body {"flowId": "...", ...optional fields}.
-// Returns the API response body as string or an error.
 func (m *FyersModel) ModifySmartOrder(req ModifySmartOrderRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -89,8 +78,6 @@ func (m *FyersModel) ModifySmartOrder(req ModifySmartOrderRequest) (string, erro
 	return string(resp.Body), nil
 }
 
-// CancelSmartOrder cancels a smart order. Pass the flowId (or "id" from create response).
-// DELETE /smart-order/cancel with body {"flowId": "..."}.
 func (m *FyersModel) CancelSmartOrder(req FlowIdRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -105,8 +92,6 @@ func (m *FyersModel) CancelSmartOrder(req FlowIdRequest) (string, error) {
 	return string(resp.Body), nil
 }
 
-// PauseSmartOrder pauses a smart order. Pass the flowId (or "id" from create response).
-// PATCH /smart-order/pause with body {"flowId": "..."}.
 func (m *FyersModel) PauseSmartOrder(req FlowIdRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -121,8 +106,6 @@ func (m *FyersModel) PauseSmartOrder(req FlowIdRequest) (string, error) {
 	return string(resp.Body), nil
 }
 
-// ResumeSmartOrder resumes a smart order. Pass the flowId (or "id" from create response).
-// PATCH /smart-order/resume with body {"flowId": "..."}.
 func (m *FyersModel) ResumeSmartOrder(req FlowIdRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -137,8 +120,6 @@ func (m *FyersModel) ResumeSmartOrder(req FlowIdRequest) (string, error) {
 	return string(resp.Body), nil
 }
 
-// GetSmartOrderBookWithFilter returns the smart order book with optional filters.
-// Pass nil for no filters. Returns the API response body as string or an error.
 func (m *FyersModel) GetSmartOrderBookWithFilter(req *GetSmartOrderBookFilter) (string, error) {
 	params := url.Values{}
 	if req != nil {
@@ -180,9 +161,6 @@ func (m *FyersModel) GetSmartOrderBookWithFilter(req *GetSmartOrderBookFilter) (
 	return string(resp.Body), nil
 }
 
-// CreateSmartExitTrigger creates a smart exit trigger.
-// Type: 1 = Only Alert, 2 = Exit with Alert, 3 = Exit with Alert + Wait for Recovery. WaitTime is required for type 3.
-// Returns the API response body as string or an error.
 func (m *FyersModel) CreateSmartExitTrigger(req CreateSmartExitTriggerRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -197,8 +175,6 @@ func (m *FyersModel) CreateSmartExitTrigger(req CreateSmartExitTriggerRequest) (
 	return string(resp.Body), nil
 }
 
-// GetSmartExitTrigger returns smart exit trigger details. Pass nil or filter with FlowId set for a specific trigger.
-// Returns the API response body as string or an error.
 func (m *FyersModel) GetSmartExitTrigger(req *GetSmartExitTriggerFilter) (string, error) {
 	params := url.Values{}
 	if req != nil && req.FlowId != "" {
@@ -211,8 +187,6 @@ func (m *FyersModel) GetSmartExitTrigger(req *GetSmartExitTriggerFilter) (string
 	return string(resp.Body), nil
 }
 
-// UpdateSmartExitTrigger updates a smart exit trigger by flowId.
-// Returns the API response body as string or an error.
 func (m *FyersModel) UpdateSmartExitTrigger(req UpdateSmartExitTriggerRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
@@ -227,8 +201,6 @@ func (m *FyersModel) UpdateSmartExitTrigger(req UpdateSmartExitTriggerRequest) (
 	return string(resp.Body), nil
 }
 
-// ActivateDeactivateSmartExitTrigger activates or deactivates a smart exit trigger by flowId.
-// Returns the API response body as string or an error.
 func (m *FyersModel) ActivateDeactivateSmartExitTrigger(req FlowIdRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
