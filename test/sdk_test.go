@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	fyersgosdk "fyers-go-sdk"
+	fyersgosdk "github.com/kishore-fyers/fyers-go-sdk"
 )
 
 // Test credentials from env (optional). If not set, tests that require API calls will skip or expect auth errors.

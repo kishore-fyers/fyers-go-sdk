@@ -2,7 +2,7 @@ package fyersgosdk
 
 import (
 	"fmt"
-	fyersws "fyers-go-sdk/websocket"
+	fyersws "github.com/kishore-fyers/fyers-go-sdk/websocket"
 	"os"
 	"os/signal"
 	"syscall"

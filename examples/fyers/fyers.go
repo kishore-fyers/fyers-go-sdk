@@ -3,7 +3,7 @@ package main
 import (
 	// "fmt"
 	"fmt"
-	fyersgosdk "fyers-go-sdk"
+	fyersgosdk "github.com/kishore-fyers/fyers-go-sdk"
 	// fyersws "fyers-go-sdk/websocket"
 	// "os"
 	// "os/signal"
