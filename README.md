@@ -58,12 +58,12 @@ func main() {
     fmt.Println("Login URL:", fyClient.GetLoginURL())
 
     // 2. After user authorizes, exchange auth code for access token
-    authCode := "AUTH_CODE_FROM_REDIRECT"
+    authCode := "eyjb...."
     response, err := fyClient.GenerateAccessToken(authCode, fyClient)
     if err != nil {
         log.Fatal("Error generating access token:", err)
     }
-    // Parse response JSON to get access_token; then create model for API calls
+    fmt.Println("Response:", response)
 
     // 3. Use FyersModel for all API calls (profile, orders, data, etc.)
     accessToken := "eyjb...."
